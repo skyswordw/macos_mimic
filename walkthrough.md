@@ -20,7 +20,14 @@ I have successfully built a realistic macOS simulation using React, Tailwind CSS
 - **Finder**: Mock file system interface.
 - **Safari**: Browser simulation with address bar and iframe.
 - **Calculator**: Fully functional calculator with macOS styling.
-- **VS Code**: Placeholder in Dock.
+- **VS Code**: Embedded VS Code editor (simulated).
+- **Notes**: Functional note-taking app with local storage persistence.
+- **Settings**: Change wallpaper dynamically.
+- **Terminal**: Interactive terminal with basic commands (`ls`, `help`, `date`, `clear`).
+
+### 4. System Features
+- **Interactive Menu Bar**: Clickable Apple Menu and Control Center.
+- **Dynamic Wallpaper**: Change background via Settings app.
 
 ## How to Run
 

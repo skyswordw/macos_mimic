@@ -1,12 +1,14 @@
 import React from 'react'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { useStore } from '../../store/useStore'
-import { FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaTrash, FaCode } from 'react-icons/fa'
+import { FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaTrash, FaCode, FaRocket } from 'react-icons/fa'
 
 const apps = [
+    { id: 'launchpad', title: 'Launchpad', icon: FaRocket, color: 'text-gray-500' },
     { id: 'finder', title: 'Finder', icon: FaFolderOpen, color: 'text-blue-500' },
     { id: 'safari', title: 'Safari', icon: FaSafari, color: 'text-blue-400' },
     { id: 'vscode', title: 'VS Code', icon: FaCode, color: 'text-blue-600' },
+    { id: 'terminal', title: 'Terminal', icon: FaTerminal, color: 'text-gray-700' },
     { id: 'calculator', title: 'Calculator', icon: FaCalculator, color: 'text-gray-600' },
     { id: 'notes', title: 'Notes', icon: FaRegStickyNote, color: 'text-yellow-500' },
     { id: 'settings', title: 'Settings', icon: FaCog, color: 'text-gray-500' },
@@ -14,7 +16,7 @@ const apps = [
 ]
 
 const DockItem = ({ mouseX, app }) => {
-    const { openWindow, windows } = useStore()
+    const { openWindow, windows, toggleLaunchpad } = useStore()
 
     let ref = React.useRef(null)
     let distance = useTransform(mouseX, (val) => {
@@ -27,13 +29,21 @@ const DockItem = ({ mouseX, app }) => {
 
     const isOpen = windows.find(w => w.id === app.id && w.isOpen)
 
+    const handleClick = () => {
+        if (app.id === 'launchpad') {
+            toggleLaunchpad()
+        } else {
+            openWindow(app.id, app.title, app.id)
+        }
+    }
+
     return (
         <div className="flex flex-col items-center gap-1">
             <motion.div
                 ref={ref}
                 style={{ width }}
                 className="aspect-square rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg flex items-center justify-center cursor-pointer hover:bg-white/20 transition-colors relative"
-                onClick={() => openWindow(app.id, app.title, app.id)}
+                onClick={handleClick}
             >
                 <app.icon className={`w-3/5 h-3/5 ${app.color}`} />
             </motion.div>

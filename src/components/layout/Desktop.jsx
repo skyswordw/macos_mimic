@@ -3,11 +3,21 @@ import MenuBar from './MenuBar'
 import Dock from '../dock/Dock'
 import WindowManager from '../window/WindowManager'
 
+import { useStore } from '../../store/useStore'
+
+import Launchpad from '../system/Launchpad'
+import Spotlight from '../system/Spotlight'
+import ContextMenu from '../system/ContextMenu'
+import NotificationCenter from '../system/NotificationCenter'
+import DesktopIcon from './DesktopIcon'
+
 const Desktop = () => {
+    const { wallpaper, desktopIcons } = useStore()
+
     return (
         <div
-            className="relative w-full h-full bg-cover bg-center overflow-hidden"
-            style={{ backgroundImage: "url('https://4kwallpapers.com/images/wallpapers/macos-monterey-stock-purple-dark-mode-layers-5k-4480x2520-5888.jpg')" }}
+            className="relative w-full h-full bg-cover bg-center overflow-hidden transition-all duration-500"
+            style={{ backgroundImage: `url('${wallpaper}')` }}
         >
             {/* Overlay to darken background slightly if needed */}
             <div className="absolute inset-0 bg-black/10 pointer-events-none" />
@@ -15,9 +25,16 @@ const Desktop = () => {
             <MenuBar />
 
             <div className="relative w-full h-full pt-8 pb-20">
+                {desktopIcons.map(icon => (
+                    <DesktopIcon key={icon.id} icon={icon} />
+                ))}
                 <WindowManager />
             </div>
 
+            <Launchpad />
+            <Spotlight />
+            <NotificationCenter />
+            <ContextMenu />
             <Dock />
         </div>
     )
