@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { FaApple, FaWifi, FaBatteryFull, FaSearch, FaToggleOn } from 'react-icons/fa'
+import { FaApple, FaWifi, FaBatteryFull, FaSearch, FaToggleOn, FaTh } from 'react-icons/fa'
 import { format } from 'date-fns'
 import { useStore } from '../../store/useStore'
 
 const MenuBar = () => {
     const [time, setTime] = useState(new Date())
-    const { toggleSpotlight, toggleNotificationCenter } = useStore()
+    const { toggleSpotlight, toggleNotificationCenter, toggleMissionControl, currentDesktop, desktops, darkMode } = useStore()
     const [activeMenu, setActiveMenu] = useState(null)
     const [showControlCenter, setShowControlCenter] = useState(false)
 
@@ -30,8 +30,10 @@ const MenuBar = () => {
     }, [])
 
     return (
-        <div className="w-full h-8 bg-mac-window/30 backdrop-blur-md flex items-center justify-between px-4 text-white text-sm select-none z-50 shadow-sm relative">
-            <div className="flex items-center gap-4 h-full" onClick={(e) => e.stopPropagation()}>
+        <div className={`w-full h-7 sm:h-8 backdrop-blur-md flex items-center justify-between px-2 sm:px-4 text-xs sm:text-sm select-none z-50 shadow-sm relative transition-colors duration-500 ${
+            darkMode ? 'bg-black/40 text-white' : 'bg-white/30 text-white'
+        }`}>
+            <div className="flex items-center gap-2 sm:gap-4 h-full" onClick={(e) => e.stopPropagation()}>
                 <div className="relative">
                     <FaApple
                         className="text-lg cursor-pointer hover:text-gray-200"
@@ -62,8 +64,14 @@ const MenuBar = () => {
                 <span className="cursor-pointer hidden sm:block hover:text-gray-200">Help</span>
             </div>
 
-            <div className="flex items-center gap-4 text-sm font-medium" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-4 text-xs sm:text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <span className="hidden sm:inline text-xs bg-white/20 px-2 py-0.5 rounded">Desktop {currentDesktop}</span>
+                    <FaTh
+                        className="text-sm cursor-pointer hover:text-gray-200"
+                        onClick={toggleMissionControl}
+                        title="Mission Control"
+                    />
                     <FaBatteryFull className="text-lg" />
                     <FaWifi className="text-lg" />
                     <FaSearch className="text-sm cursor-pointer" onClick={toggleSpotlight} />

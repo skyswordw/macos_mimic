@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { FaApple, FaArrowRight } from 'react-icons/fa'
+import { FaApple, FaArrowRight, FaUserCircle } from 'react-icons/fa'
 import { useStore } from '../../store/useStore'
 
 const BootSequence = () => {
@@ -8,6 +8,7 @@ const BootSequence = () => {
     const [progress, setProgress] = useState(0)
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
+    const [imageError, setImageError] = useState(false)
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -50,8 +51,17 @@ const BootSequence = () => {
             <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
 
             <div className="z-10 flex flex-col items-center gap-4 animate-fadeIn">
-                <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-4xl shadow-2xl overflow-hidden">
-                    <img src="https://github.com/shadcn.png" alt="User" className="w-full h-full" />
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-4xl shadow-2xl overflow-hidden">
+                    {!imageError ? (
+                        <img
+                            src="https://github.com/shadcn.png"
+                            alt="User"
+                            className="w-full h-full object-cover"
+                            onError={() => setImageError(true)}
+                        />
+                    ) : (
+                        <FaUserCircle className="w-20 h-20 text-white/90" />
+                    )}
                 </div>
                 <div className="text-white font-bold text-xl drop-shadow-md">User</div>
 

@@ -1,0 +1,438 @@
+import React, { useState, useRef, useEffect } from 'react'
+import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaRandom, FaRedo, FaVolumeUp, FaHeart, FaRegHeart, FaSearch, FaList, FaMusic, FaHome, FaCompactDisc, FaUser } from 'react-icons/fa'
+
+const Music = () => {
+    // 音乐库数据
+    const [songs] = useState([
+        {
+            id: 1,
+            title: 'Blinding Lights',
+            artist: 'The Weeknd',
+            album: 'After Hours',
+            duration: '3:20',
+            cover: 'https://picsum.photos/seed/1/200',
+            liked: false
+        },
+        {
+            id: 2,
+            title: 'Levitating',
+            artist: 'Dua Lipa',
+            album: 'Future Nostalgia',
+            duration: '3:23',
+            cover: 'https://picsum.photos/seed/2/200',
+            liked: true
+        },
+        {
+            id: 3,
+            title: 'Heat Waves',
+            artist: 'Glass Animals',
+            album: 'Dreamland',
+            duration: '3:58',
+            cover: 'https://picsum.photos/seed/3/200',
+            liked: false
+        },
+        {
+            id: 4,
+            title: 'Stay',
+            artist: 'The Kid LAROI, Justin Bieber',
+            album: 'Stay',
+            duration: '2:21',
+            cover: 'https://picsum.photos/seed/4/200',
+            liked: true
+        },
+        {
+            id: 5,
+            title: 'Good 4 U',
+            artist: 'Olivia Rodrigo',
+            album: 'SOUR',
+            duration: '2:58',
+            cover: 'https://picsum.photos/seed/5/200',
+            liked: false
+        },
+        {
+            id: 6,
+            title: 'Shivers',
+            artist: 'Ed Sheeran',
+            album: '=',
+            duration: '3:27',
+            cover: 'https://picsum.photos/seed/6/200',
+            liked: true
+        },
+        {
+            id: 7,
+            title: 'Industry Baby',
+            artist: 'Lil Nas X, Jack Harlow',
+            album: 'MONTERO',
+            duration: '3:32',
+            cover: 'https://picsum.photos/seed/7/200',
+            liked: false
+        },
+        {
+            id: 8,
+            title: 'Bad Habits',
+            artist: 'Ed Sheeran',
+            album: '=',
+            duration: '3:50',
+            cover: 'https://picsum.photos/seed/8/200',
+            liked: false
+        }
+    ])
+
+    const [playlists] = useState([
+        { id: 1, name: 'Liked Songs', count: 42, icon: FaHeart, color: 'text-red-500' },
+        { id: 2, name: 'Recently Played', count: 20, icon: FaMusic, color: 'text-blue-500' },
+        { id: 3, name: 'Chill Vibes', count: 35, icon: FaCompactDisc, color: 'text-purple-500' },
+        { id: 4, name: 'Workout Mix', count: 18, icon: FaList, color: 'text-green-500' }
+    ])
+
+    const [currentSong, setCurrentSong] = useState(songs[0])
+    const [isPlaying, setIsPlaying] = useState(false)
+    const [currentTime, setCurrentTime] = useState(0)
+    const [duration, setDuration] = useState(200) // 模拟歌曲总时长（秒）
+    const [volume, setVolume] = useState(75)
+    const [shuffle, setShuffle] = useState(false)
+    const [repeat, setRepeat] = useState(false)
+    const [searchTerm, setSearchTerm] = useState('')
+    const [currentView, setCurrentView] = useState('library') // library, playlist, nowplaying
+    const [likedSongs, setLikedSongs] = useState(songs.filter(s => s.liked))
+
+    const progressInterval = useRef(null)
+
+    // 播放/暂停切换
+    const togglePlayPause = () => {
+        setIsPlaying(!isPlaying)
+    }
+
+    // 播放指定歌曲
+    const playSong = (song) => {
+        setCurrentSong(song)
+        setIsPlaying(true)
+        setCurrentTime(0)
+    }
+
+    // 下一首
+    const nextSong = () => {
+        const currentIndex = songs.findIndex(s => s.id === currentSong.id)
+        const nextIndex = shuffle
+            ? Math.floor(Math.random() * songs.length)
+            : (currentIndex + 1) % songs.length
+        setCurrentSong(songs[nextIndex])
+        setCurrentTime(0)
+    }
+
+    // 上一首
+    const prevSong = () => {
+        const currentIndex = songs.findIndex(s => s.id === currentSong.id)
+        const prevIndex = shuffle
+            ? Math.floor(Math.random() * songs.length)
+            : (currentIndex - 1 + songs.length) % songs.length
+        setCurrentSong(songs[prevIndex])
+        setCurrentTime(0)
+    }
+
+    // 切换喜欢状态
+    const toggleLike = (songId) => {
+        const song = songs.find(s => s.id === songId)
+        song.liked = !song.liked
+        setLikedSongs([...songs.filter(s => s.liked)])
+    }
+
+    // 模拟播放进度
+    useEffect(() => {
+        if (isPlaying) {
+            progressInterval.current = setInterval(() => {
+                setCurrentTime(prev => {
+                    if (prev >= duration) {
+                        if (repeat) {
+                            return 0
+                        } else {
+                            nextSong()
+                            return 0
+                        }
+                    }
+                    return prev + 1
+                })
+            }, 1000)
+        } else {
+            clearInterval(progressInterval.current)
+        }
+
+        return () => clearInterval(progressInterval.current)
+    }, [isPlaying, duration, repeat])
+
+    // 格式化时间
+    const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60)
+        const secs = seconds % 60
+        return `${mins}:${secs.toString().padStart(2, '0')}`
+    }
+
+    // 过滤歌曲
+    const filteredSongs = songs.filter(song =>
+        song.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        song.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        song.album.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    return (
+        <div className="w-full h-full flex flex-col bg-gradient-to-br from-gray-900 to-black text-white">
+            {/* 顶部导航栏 */}
+            <div className="h-16 bg-black/30 backdrop-blur-md border-b border-white/10 flex items-center px-6 gap-4">
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setCurrentView('library')}
+                        className={`px-4 py-2 rounded-full ${currentView === 'library' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                    >
+                        Library
+                    </button>
+                    <button
+                        onClick={() => setCurrentView('playlist')}
+                        className={`px-4 py-2 rounded-full ${currentView === 'playlist' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                    >
+                        Playlists
+                    </button>
+                    <button
+                        onClick={() => setCurrentView('nowplaying')}
+                        className={`px-4 py-2 rounded-full ${currentView === 'nowplaying' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                    >
+                        Now Playing
+                    </button>
+                </div>
+
+                <div className="flex-1 max-w-md">
+                    <div className="relative">
+                        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search songs, artists, albums..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-white/10 rounded-full focus:outline-none focus:bg-white/20 placeholder-gray-400"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* 主内容区 */}
+            <div className="flex-1 flex overflow-hidden">
+                {/* 侧边栏 */}
+                <div className="w-64 bg-black/20 backdrop-blur-md border-r border-white/10 p-4">
+                    <div className="space-y-2">
+                        <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                            Browse
+                        </div>
+                        <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/10">
+                            <FaHome className="text-lg" />
+                            <span>Home</span>
+                        </button>
+                        <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/10">
+                            <FaCompactDisc className="text-lg" />
+                            <span>Browse</span>
+                        </button>
+                        <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/10">
+                            <FaUser className="text-lg" />
+                            <span>For You</span>
+                        </button>
+                    </div>
+
+                    <div className="mt-8 space-y-2">
+                        <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                            Playlists
+                        </div>
+                        {playlists.map(playlist => (
+                            <button
+                                key={playlist.id}
+                                className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/10"
+                            >
+                                <playlist.icon className={`text-lg ${playlist.color}`} />
+                                <div className="flex-1 text-left">
+                                    <div className="text-sm">{playlist.name}</div>
+                                    <div className="text-xs text-gray-400">{playlist.count} songs</div>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* 内容区域 */}
+                <div className="flex-1 overflow-auto p-6">
+                    {currentView === 'library' && (
+                        <div>
+                            <h2 className="text-2xl font-bold mb-6">Your Library</h2>
+                            <div className="space-y-2">
+                                {filteredSongs.map(song => (
+                                    <div
+                                        key={song.id}
+                                        onClick={() => playSong(song)}
+                                        className={`flex items-center gap-4 p-3 rounded-lg hover:bg-white/10 cursor-pointer ${
+                                            currentSong.id === song.id ? 'bg-white/20' : ''
+                                        }`}
+                                    >
+                                        <img
+                                            src={song.cover}
+                                            alt={song.title}
+                                            className="w-12 h-12 rounded-md object-cover"
+                                        />
+                                        <div className="flex-1">
+                                            <div className="font-medium">{song.title}</div>
+                                            <div className="text-sm text-gray-400">{song.artist}</div>
+                                        </div>
+                                        <div className="text-sm text-gray-400">{song.album}</div>
+                                        <div className="text-sm text-gray-400">{song.duration}</div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                toggleLike(song.id)
+                                            }}
+                                            className="p-2 hover:bg-white/10 rounded-full"
+                                        >
+                                            {song.liked ? (
+                                                <FaHeart className="text-red-500" />
+                                            ) : (
+                                                <FaRegHeart className="text-gray-400 hover:text-white" />
+                                            )}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {currentView === 'playlist' && (
+                        <div>
+                            <h2 className="text-2xl font-bold mb-6">Your Playlists</h2>
+                            <div className="grid grid-cols-2 gap-4">
+                                {playlists.map(playlist => (
+                                    <div
+                                        key={playlist.id}
+                                        className="bg-white/10 rounded-lg p-6 hover:bg-white/20 cursor-pointer transition-colors"
+                                    >
+                                        <div className={`text-4xl mb-4 ${playlist.color}`}>
+                                            <playlist.icon />
+                                        </div>
+                                        <div className="text-xl font-bold">{playlist.name}</div>
+                                        <div className="text-gray-400">{playlist.count} songs</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {currentView === 'nowplaying' && (
+                        <div className="flex flex-col items-center justify-center h-full">
+                            <img
+                                src={currentSong.cover}
+                                alt={currentSong.title}
+                                className="w-64 h-64 rounded-xl shadow-2xl mb-8 object-cover"
+                            />
+                            <div className="text-center mb-8">
+                                <h2 className="text-3xl font-bold mb-2">{currentSong.title}</h2>
+                                <p className="text-xl text-gray-400">{currentSong.artist}</p>
+                                <p className="text-gray-500">{currentSong.album}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* 播放控制栏 */}
+            <div className="h-24 bg-black/40 backdrop-blur-xl border-t border-white/10 px-6 flex items-center gap-6">
+                {/* 当前播放信息 */}
+                <div className="flex items-center gap-3 w-64">
+                    <img
+                        src={currentSong.cover}
+                        alt={currentSong.title}
+                        className="w-14 h-14 rounded-md object-cover"
+                    />
+                    <div>
+                        <div className="font-medium">{currentSong.title}</div>
+                        <div className="text-sm text-gray-400">{currentSong.artist}</div>
+                    </div>
+                    <button
+                        onClick={() => toggleLike(currentSong.id)}
+                        className="p-2 hover:bg-white/10 rounded-full"
+                    >
+                        {currentSong.liked ? (
+                            <FaHeart className="text-red-500" />
+                        ) : (
+                            <FaRegHeart className="text-gray-400 hover:text-white" />
+                        )}
+                    </button>
+                </div>
+
+                {/* 播放控制 */}
+                <div className="flex-1 flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setShuffle(!shuffle)}
+                            className={`p-2 rounded-full hover:bg-white/10 ${shuffle ? 'text-green-500' : 'text-gray-400'}`}
+                        >
+                            <FaRandom />
+                        </button>
+                        <button
+                            onClick={prevSong}
+                            className="p-2 rounded-full hover:bg-white/10"
+                        >
+                            <FaStepBackward className="text-xl" />
+                        </button>
+                        <button
+                            onClick={togglePlayPause}
+                            className="p-3 bg-white text-black rounded-full hover:scale-105 transition-transform"
+                        >
+                            {isPlaying ? <FaPause className="text-xl" /> : <FaPlay className="text-xl ml-0.5" />}
+                        </button>
+                        <button
+                            onClick={nextSong}
+                            className="p-2 rounded-full hover:bg-white/10"
+                        >
+                            <FaStepForward className="text-xl" />
+                        </button>
+                        <button
+                            onClick={() => setRepeat(!repeat)}
+                            className={`p-2 rounded-full hover:bg-white/10 ${repeat ? 'text-green-500' : 'text-gray-400'}`}
+                        >
+                            <FaRedo />
+                        </button>
+                    </div>
+
+                    {/* 进度条 */}
+                    <div className="flex items-center gap-2 w-full max-w-md">
+                        <span className="text-xs text-gray-400 w-10 text-right">{formatTime(currentTime)}</span>
+                        <div className="flex-1 relative">
+                            <div className="h-1 bg-gray-600 rounded-full">
+                                <div
+                                    className="h-1 bg-white rounded-full"
+                                    style={{ width: `${(currentTime / duration) * 100}%` }}
+                                />
+                            </div>
+                            <input
+                                type="range"
+                                min="0"
+                                max={duration}
+                                value={currentTime}
+                                onChange={(e) => setCurrentTime(parseInt(e.target.value))}
+                                className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                            />
+                        </div>
+                        <span className="text-xs text-gray-400 w-10">{formatTime(duration)}</span>
+                    </div>
+                </div>
+
+                {/* 音量控制 */}
+                <div className="flex items-center gap-2 w-32">
+                    <FaVolumeUp className="text-gray-400" />
+                    <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={volume}
+                        onChange={(e) => setVolume(parseInt(e.target.value))}
+                        className="flex-1"
+                    />
+                </div>
+            </div>
+        </div>
+    )
+}
+
+export default Music
