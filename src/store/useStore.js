@@ -1,24 +1,40 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { soundEffects } from '../utils/soundEffects'
 
-export const useStore = create((set) => ({
+// 从 localStorage 获取保存的设置
+const getPersistedSettings = () => {
+    try {
+        const saved = localStorage.getItem('macos-settings')
+        return saved ? JSON.parse(saved) : {}
+    } catch {
+        return {}
+    }
+}
+
+const persistedSettings = getPersistedSettings()
+
+export const useStore = create(
+    persist(
+        (set, get) => ({
     windows: [], // { id, title, component, isOpen, isMinimised, isMaximized, zIndex, position, size, desktop }
     activeWindowId: null,
     zIndexCounter: 10,
-    wallpaper: 'https://4kwallpapers.com/images/wallpapers/macos-monterey-stock-purple-dark-mode-layers-5k-4480x2520-5888.jpg',
+    wallpaper: persistedSettings.wallpaper || 'https://4kwallpapers.com/images/wallpapers/macos-monterey-stock-purple-dark-mode-layers-5k-4480x2520-5888.jpg',
     isLogin: false,
     isLaunchpadOpen: false,
     isSpotlightOpen: false,
     isNotificationCenterOpen: false,
     isMissionControlOpen: false,
-    brightness: 100,
-    darkMode: false,
-    soundEnabled: true,
-    soundVolume: 0.3,
+    brightness: persistedSettings.brightness ?? 100,
+    darkMode: persistedSettings.darkMode ?? false,
+    soundEnabled: persistedSettings.soundEnabled ?? true,
+    soundVolume: persistedSettings.soundVolume ?? 0.3,
     desktopIcons: [
         { id: 'hd', label: 'Macintosh HD', icon: 'hdd', position: { x: 20, y: 20 } },
         { id: 'readme', label: 'Readme.txt', icon: 'file', position: { x: 20, y: 120 } }
     ],
+    trashItems: [], // 回收站内容
 
     // 多桌面相关状态
     desktops: [1],
@@ -172,4 +188,32 @@ export const useStore = create((set) => ({
     updateIconPosition: (id, position) => set((state) => ({
         desktopIcons: state.desktopIcons.map(icon => icon.id === id ? { ...icon, position } : icon)
     })),
-}))
+
+    // Trash 操作
+    moveToTrash: (item) => set((state) => ({
+        trashItems: [...state.trashItems, { ...item, deletedAt: new Date().toISOString() }]
+    })),
+
+    restoreFromTrash: (id) => set((state) => ({
+        trashItems: state.trashItems.filter(item => item.id !== id)
+    })),
+
+    emptyTrash: () => set({ trashItems: [] }),
+
+    deleteFromTrash: (id) => set((state) => ({
+        trashItems: state.trashItems.filter(item => item.id !== id)
+    })),
+}),
+        {
+            name: 'macos-settings',
+            partialize: (state) => ({
+                darkMode: state.darkMode,
+                brightness: state.brightness,
+                wallpaper: state.wallpaper,
+                soundEnabled: state.soundEnabled,
+                soundVolume: state.soundVolume,
+                trashItems: state.trashItems,
+            }),
+        }
+    )
+)

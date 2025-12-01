@@ -11,6 +11,9 @@ import Settings from '../../apps/Settings'
 import Terminal from '../../apps/Terminal'
 import Music from '../../apps/Music'
 import Messages from '../../apps/Messages'
+import Photos from '../../apps/Photos'
+import Calendar from '../../apps/Calendar'
+import Trash from '../../apps/Trash'
 
 const WindowManager = () => {
     const { windows, currentDesktop } = useStore()
@@ -26,6 +29,9 @@ const WindowManager = () => {
             case 'terminal': return <Terminal />
             case 'music': return <Music />
             case 'messages': return <Messages />
+            case 'photos': return <Photos />
+            case 'calendar': return <Calendar />
+            case 'trash': return <Trash />
             default: return <div className="p-4">App not implemented yet</div>
         }
     }

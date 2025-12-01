@@ -4,6 +4,7 @@ import Dock from '../dock/Dock'
 import WindowManager from '../window/WindowManager'
 
 import { useStore } from '../../store/useStore'
+import useKeyboardShortcuts from '../../hooks/useKeyboardShortcuts'
 
 import Launchpad from '../system/Launchpad'
 import Spotlight from '../system/Spotlight'
@@ -14,6 +15,9 @@ import DesktopIcon from './DesktopIcon'
 
 const Desktop = () => {
     const { wallpaper, desktopIcons, darkMode } = useStore()
+
+    // 注册全局键盘快捷键
+    useKeyboardShortcuts()
 
     return (
         <div

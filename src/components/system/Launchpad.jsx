@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { useStore } from '../../store/useStore'
-import { FaSearch, FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaTrash, FaCode, FaMusic, FaComments } from 'react-icons/fa'
+import { FaSearch, FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaTrash, FaCode, FaMusic, FaComments, FaImage, FaCalendarAlt } from 'react-icons/fa'
 
 const apps = [
     { id: 'finder', title: 'Finder', icon: FaFolderOpen, color: 'text-blue-500' },
     { id: 'safari', title: 'Safari', icon: FaSafari, color: 'text-blue-400' },
     { id: 'messages', title: 'Messages', icon: FaComments, color: 'text-green-500' },
     { id: 'music', title: 'Music', icon: FaMusic, color: 'text-red-500' },
+    { id: 'photos', title: 'Photos', icon: FaImage, color: 'text-pink-500' },
+    { id: 'calendar', title: 'Calendar', icon: FaCalendarAlt, color: 'text-red-500' },
     { id: 'vscode', title: 'VS Code', icon: FaCode, color: 'text-blue-600' },
     { id: 'terminal', title: 'Terminal', icon: FaTerminal, color: 'text-gray-700' },
     { id: 'calculator', title: 'Calculator', icon: FaCalculator, color: 'text-gray-600' },
