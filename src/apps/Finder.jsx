@@ -214,7 +214,7 @@ const Finder = () => {
         }
     }
 
-    // 双击打开文件夹
+    // 双击打开文件夹或文件
     const handleItemDoubleClick = (item) => {
         if (item.type === 'folder') {
             const newPath = `${currentPath}/${item.name}`
@@ -226,6 +226,13 @@ const Finder = () => {
                 })
             }
             navigateTo(newPath)
+        } else {
+            // 打开文件 - 使用 Quick Look 预览
+            const fileIndex = filteredFiles.findIndex(f => f.id === item.id)
+            if (fileIndex !== -1) {
+                setQuickLookIndex(fileIndex)
+                setQuickLookOpen(true)
+            }
         }
     }
 

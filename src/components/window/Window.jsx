@@ -262,8 +262,6 @@ const Window = ({ window, children }) => {
         animate: {
             scale: 1,
             opacity: 1,
-            y: 0,
-            x: 0,
             filter: "blur(0px)",
             scaleX: 1,
             scaleY: 1,
