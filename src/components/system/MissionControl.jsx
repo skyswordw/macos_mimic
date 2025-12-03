@@ -85,13 +85,19 @@ const MissionControl = () => {
         const thumbnails = {
             'finder': '📁 Finder',
             'safari': '🌐 Safari',
+            'mail': '📧 Mail',
             'messages': '💬 Messages',
             'music': '🎵 Music',
+            'photos': '🖼️ Photos',
+            'calendar': '📅 Calendar',
+            'reminders': '✅ Reminders',
+            'weather': '🌤️ Weather',
             'terminal': '⌨️ Terminal',
             'calculator': '🔢 Calculator',
             'notes': '📝 Notes',
             'settings': '⚙️ Settings',
-            'vscode': '💻 VS Code'
+            'vscode': '💻 VS Code',
+            'trash': '🗑️ Trash'
         }
         return thumbnails[windowComponent] || '📄 App'
     }

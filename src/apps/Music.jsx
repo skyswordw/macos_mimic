@@ -1,15 +1,204 @@
-import React, { useState, useRef, useEffect } from 'react'
-import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaRandom, FaRedo, FaVolumeUp, FaHeart, FaRegHeart, FaSearch, FaList, FaMusic, FaHome, FaCompactDisc, FaUser } from 'react-icons/fa'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaRandom, FaRedo, FaVolumeUp, FaVolumeMute, FaHeart, FaRegHeart, FaSearch, FaList, FaMusic, FaHome, FaCompactDisc, FaUser } from 'react-icons/fa'
+
+// Audio synthesis engine for generating music
+class MusicSynthesizer {
+    constructor() {
+        this.audioContext = null
+        this.masterGain = null
+        this.isInitialized = false
+        this.currentNotes = []
+        this.sequencer = null
+        this.isPlaying = false
+        this.currentStep = 0
+        this.bpm = 120
+    }
+
+    init() {
+        if (this.isInitialized) return
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)()
+        this.masterGain = this.audioContext.createGain()
+        this.masterGain.connect(this.audioContext.destination)
+        this.masterGain.gain.value = 0.3
+        this.isInitialized = true
+    }
+
+    setVolume(volume) {
+        if (this.masterGain) {
+            this.masterGain.gain.value = volume * 0.5
+        }
+    }
+
+    // Musical note frequencies
+    getNoteFrequency(note, octave = 4) {
+        const notes = { 'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5, 'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11 }
+        const semitone = notes[note] + (octave - 4) * 12
+        return 440 * Math.pow(2, (semitone - 9) / 12)
+    }
+
+    playNote(frequency, duration = 0.5, type = 'sine', delay = 0) {
+        if (!this.isInitialized) this.init()
+
+        const osc = this.audioContext.createOscillator()
+        const gainNode = this.audioContext.createGain()
+
+        osc.type = type
+        osc.frequency.value = frequency
+        osc.connect(gainNode)
+        gainNode.connect(this.masterGain)
+
+        const now = this.audioContext.currentTime + delay
+        gainNode.gain.setValueAtTime(0.3, now)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration)
+
+        osc.start(now)
+        osc.stop(now + duration)
+
+        return osc
+    }
+
+    // Different song patterns
+    getSongPattern(songId) {
+        const patterns = {
+            1: { // Blinding Lights - synth pop pattern
+                bpm: 171,
+                type: 'sawtooth',
+                notes: [
+                    ['F#', 4], ['A', 4], ['B', 4], ['F#', 5],
+                    ['E', 5], ['D', 5], ['B', 4], ['A', 4],
+                    ['F#', 4], ['A', 4], ['B', 4], ['D', 5],
+                    ['C#', 5], ['B', 4], ['A', 4], ['F#', 4]
+                ]
+            },
+            2: { // Levitating - disco pop
+                bpm: 103,
+                type: 'square',
+                notes: [
+                    ['G', 4], ['B', 4], ['D', 5], ['G', 5],
+                    ['F#', 5], ['D', 5], ['B', 4], ['G', 4],
+                    ['A', 4], ['C', 5], ['E', 5], ['A', 5],
+                    ['G', 5], ['E', 5], ['C', 5], ['A', 4]
+                ]
+            },
+            3: { // Heat Waves - dreamy
+                bpm: 80,
+                type: 'sine',
+                notes: [
+                    ['D', 4], ['F#', 4], ['A', 4], ['D', 5],
+                    ['C#', 5], ['A', 4], ['F#', 4], ['D', 4],
+                    ['E', 4], ['G', 4], ['B', 4], ['E', 5],
+                    ['D', 5], ['B', 4], ['G', 4], ['E', 4]
+                ]
+            },
+            4: { // Stay - upbeat
+                bpm: 170,
+                type: 'triangle',
+                notes: [
+                    ['C', 5], ['E', 5], ['G', 5], ['C', 6],
+                    ['B', 5], ['G', 5], ['E', 5], ['C', 5],
+                    ['D', 5], ['F', 5], ['A', 5], ['D', 6],
+                    ['C', 6], ['A', 5], ['F', 5], ['D', 5]
+                ]
+            },
+            5: { // Good 4 U - rock
+                bpm: 166,
+                type: 'sawtooth',
+                notes: [
+                    ['A', 4], ['C', 5], ['E', 5], ['A', 5],
+                    ['G', 5], ['E', 5], ['C', 5], ['A', 4],
+                    ['B', 4], ['D', 5], ['F#', 5], ['B', 5],
+                    ['A', 5], ['F#', 5], ['D', 5], ['B', 4]
+                ]
+            },
+            6: { // Shivers - dance pop
+                bpm: 141,
+                type: 'square',
+                notes: [
+                    ['E', 4], ['G#', 4], ['B', 4], ['E', 5],
+                    ['D#', 5], ['B', 4], ['G#', 4], ['E', 4],
+                    ['F#', 4], ['A', 4], ['C#', 5], ['F#', 5],
+                    ['E', 5], ['C#', 5], ['A', 4], ['F#', 4]
+                ]
+            },
+            7: { // Industry Baby - brass-like
+                bpm: 150,
+                type: 'sawtooth',
+                notes: [
+                    ['G', 4], ['B', 4], ['D', 5], ['G', 5],
+                    ['F', 5], ['D', 5], ['B', 4], ['G', 4],
+                    ['A', 4], ['C', 5], ['E', 5], ['A', 5],
+                    ['G', 5], ['E', 5], ['C', 5], ['A', 4]
+                ]
+            },
+            8: { // Bad Habits - synth
+                bpm: 126,
+                type: 'sine',
+                notes: [
+                    ['B', 4], ['D', 5], ['F#', 5], ['B', 5],
+                    ['A', 5], ['F#', 5], ['D', 5], ['B', 4],
+                    ['C#', 5], ['E', 5], ['G#', 5], ['C#', 6],
+                    ['B', 5], ['G#', 5], ['E', 5], ['C#', 5]
+                ]
+            }
+        }
+        return patterns[songId] || patterns[1]
+    }
+
+    playSong(songId) {
+        if (!this.isInitialized) this.init()
+        this.stop()
+
+        const pattern = this.getSongPattern(songId)
+        this.bpm = pattern.bpm
+        this.isPlaying = true
+        this.currentStep = 0
+
+        const stepDuration = 60 / this.bpm / 2
+
+        const playStep = () => {
+            if (!this.isPlaying) return
+
+            const [note, octave] = pattern.notes[this.currentStep % pattern.notes.length]
+            const freq = this.getNoteFrequency(note, octave)
+            this.playNote(freq, stepDuration * 0.8, pattern.type)
+
+            // Add bass note
+            const bassFreq = this.getNoteFrequency(note, octave - 2)
+            this.playNote(bassFreq, stepDuration * 0.8, 'sine')
+
+            this.currentStep++
+            this.sequencer = setTimeout(playStep, stepDuration * 1000)
+        }
+
+        playStep()
+    }
+
+    stop() {
+        this.isPlaying = false
+        if (this.sequencer) {
+            clearTimeout(this.sequencer)
+            this.sequencer = null
+        }
+    }
+
+    resume() {
+        if (this.currentSongId) {
+            this.playSong(this.currentSongId)
+        }
+    }
+}
+
+const synthesizer = new MusicSynthesizer()
 
 const Music = () => {
-    // 音乐库数据
-    const [songs] = useState([
+    const [songs, setSongs] = useState([
         {
             id: 1,
             title: 'Blinding Lights',
             artist: 'The Weeknd',
             album: 'After Hours',
             duration: '3:20',
+            durationSec: 200,
             cover: 'https://picsum.photos/seed/1/200',
             liked: false
         },
@@ -19,6 +208,7 @@ const Music = () => {
             artist: 'Dua Lipa',
             album: 'Future Nostalgia',
             duration: '3:23',
+            durationSec: 203,
             cover: 'https://picsum.photos/seed/2/200',
             liked: true
         },
@@ -28,6 +218,7 @@ const Music = () => {
             artist: 'Glass Animals',
             album: 'Dreamland',
             duration: '3:58',
+            durationSec: 238,
             cover: 'https://picsum.photos/seed/3/200',
             liked: false
         },
@@ -37,6 +228,7 @@ const Music = () => {
             artist: 'The Kid LAROI, Justin Bieber',
             album: 'Stay',
             duration: '2:21',
+            durationSec: 141,
             cover: 'https://picsum.photos/seed/4/200',
             liked: true
         },
@@ -46,6 +238,7 @@ const Music = () => {
             artist: 'Olivia Rodrigo',
             album: 'SOUR',
             duration: '2:58',
+            durationSec: 178,
             cover: 'https://picsum.photos/seed/5/200',
             liked: false
         },
@@ -55,6 +248,7 @@ const Music = () => {
             artist: 'Ed Sheeran',
             album: '=',
             duration: '3:27',
+            durationSec: 207,
             cover: 'https://picsum.photos/seed/6/200',
             liked: true
         },
@@ -64,6 +258,7 @@ const Music = () => {
             artist: 'Lil Nas X, Jack Harlow',
             album: 'MONTERO',
             duration: '3:32',
+            durationSec: 212,
             cover: 'https://picsum.photos/seed/7/200',
             liked: false
         },
@@ -73,6 +268,7 @@ const Music = () => {
             artist: 'Ed Sheeran',
             album: '=',
             duration: '3:50',
+            durationSec: 230,
             cover: 'https://picsum.photos/seed/8/200',
             liked: false
         }
@@ -88,60 +284,90 @@ const Music = () => {
     const [currentSong, setCurrentSong] = useState(songs[0])
     const [isPlaying, setIsPlaying] = useState(false)
     const [currentTime, setCurrentTime] = useState(0)
-    const [duration, setDuration] = useState(200) // 模拟歌曲总时长（秒）
     const [volume, setVolume] = useState(75)
+    const [isMuted, setIsMuted] = useState(false)
     const [shuffle, setShuffle] = useState(false)
     const [repeat, setRepeat] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
-    const [currentView, setCurrentView] = useState('library') // library, playlist, nowplaying
+    const [currentView, setCurrentView] = useState('library')
     const [likedSongs, setLikedSongs] = useState(songs.filter(s => s.liked))
 
     const progressInterval = useRef(null)
 
-    // 播放/暂停切换
-    const togglePlayPause = () => {
-        setIsPlaying(!isPlaying)
-    }
+    // Update volume when changed
+    useEffect(() => {
+        synthesizer.setVolume(isMuted ? 0 : volume / 100)
+    }, [volume, isMuted])
 
-    // 播放指定歌曲
-    const playSong = (song) => {
+    // Play/pause toggle with actual audio
+    const togglePlayPause = useCallback(() => {
+        if (isPlaying) {
+            synthesizer.stop()
+            setIsPlaying(false)
+        } else {
+            synthesizer.playSong(currentSong.id)
+            setIsPlaying(true)
+        }
+    }, [isPlaying, currentSong.id])
+
+    // Play specific song with actual audio
+    const playSong = useCallback((song) => {
         setCurrentSong(song)
         setIsPlaying(true)
         setCurrentTime(0)
-    }
+        synthesizer.playSong(song.id)
+    }, [])
 
-    // 下一首
-    const nextSong = () => {
+    // Next song
+    const nextSong = useCallback(() => {
         const currentIndex = songs.findIndex(s => s.id === currentSong.id)
         const nextIndex = shuffle
             ? Math.floor(Math.random() * songs.length)
             : (currentIndex + 1) % songs.length
-        setCurrentSong(songs[nextIndex])
+        const nextSongObj = songs[nextIndex]
+        setCurrentSong(nextSongObj)
         setCurrentTime(0)
-    }
+        if (isPlaying) {
+            synthesizer.playSong(nextSongObj.id)
+        }
+    }, [songs, currentSong.id, shuffle, isPlaying])
 
-    // 上一首
-    const prevSong = () => {
+    // Previous song
+    const prevSong = useCallback(() => {
         const currentIndex = songs.findIndex(s => s.id === currentSong.id)
         const prevIndex = shuffle
             ? Math.floor(Math.random() * songs.length)
             : (currentIndex - 1 + songs.length) % songs.length
-        setCurrentSong(songs[prevIndex])
+        const prevSongObj = songs[prevIndex]
+        setCurrentSong(prevSongObj)
         setCurrentTime(0)
-    }
+        if (isPlaying) {
+            synthesizer.playSong(prevSongObj.id)
+        }
+    }, [songs, currentSong.id, shuffle, isPlaying])
 
-    // 切换喜欢状态
-    const toggleLike = (songId) => {
-        const song = songs.find(s => s.id === songId)
-        song.liked = !song.liked
-        setLikedSongs([...songs.filter(s => s.liked)])
-    }
+    // Toggle like status
+    const toggleLike = useCallback((songId) => {
+        setSongs(prevSongs => {
+            const updated = prevSongs.map(s =>
+                s.id === songId ? { ...s, liked: !s.liked } : s
+            )
+            setLikedSongs(updated.filter(s => s.liked))
+            return updated
+        })
+    }, [])
 
-    // 模拟播放进度
+    // Toggle mute
+    const toggleMute = useCallback(() => {
+        setIsMuted(prev => !prev)
+    }, [])
+
+    // Progress tracking
     useEffect(() => {
         if (isPlaying) {
             progressInterval.current = setInterval(() => {
                 setCurrentTime(prev => {
+                    const duration = currentSong.durationSec
                     if (prev >= duration) {
                         if (repeat) {
                             return 0
@@ -158,7 +384,14 @@ const Music = () => {
         }
 
         return () => clearInterval(progressInterval.current)
-    }, [isPlaying, duration, repeat])
+    }, [isPlaying, currentSong.durationSec, repeat, nextSong])
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            synthesizer.stop()
+        }
+    }, [])
 
     // 格式化时间
     const formatTime = (seconds) => {
@@ -395,40 +628,60 @@ const Music = () => {
                         </button>
                     </div>
 
-                    {/* 进度条 */}
+                    {/* Progress bar */}
                     <div className="flex items-center gap-2 w-full max-w-md">
                         <span className="text-xs text-gray-400 w-10 text-right">{formatTime(currentTime)}</span>
-                        <div className="flex-1 relative">
+                        <div className="flex-1 relative group">
                             <div className="h-1 bg-gray-600 rounded-full">
                                 <div
-                                    className="h-1 bg-white rounded-full"
-                                    style={{ width: `${(currentTime / duration) * 100}%` }}
+                                    className="h-1 bg-white rounded-full transition-all"
+                                    style={{ width: `${(currentTime / currentSong.durationSec) * 100}%` }}
                                 />
                             </div>
                             <input
                                 type="range"
                                 min="0"
-                                max={duration}
+                                max={currentSong.durationSec}
                                 value={currentTime}
                                 onChange={(e) => setCurrentTime(parseInt(e.target.value))}
                                 className="absolute inset-0 w-full opacity-0 cursor-pointer"
                             />
                         </div>
-                        <span className="text-xs text-gray-400 w-10">{formatTime(duration)}</span>
+                        <span className="text-xs text-gray-400 w-10">{formatTime(currentSong.durationSec)}</span>
                     </div>
                 </div>
 
-                {/* 音量控制 */}
-                <div className="flex items-center gap-2 w-32">
-                    <FaVolumeUp className="text-gray-400" />
-                    <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={volume}
-                        onChange={(e) => setVolume(parseInt(e.target.value))}
-                        className="flex-1"
-                    />
+                {/* Volume control */}
+                <div className="flex items-center gap-2 w-36">
+                    <button
+                        onClick={toggleMute}
+                        className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                    >
+                        {isMuted || volume === 0 ? (
+                            <FaVolumeMute className="text-gray-400" />
+                        ) : (
+                            <FaVolumeUp className="text-gray-400" />
+                        )}
+                    </button>
+                    <div className="flex-1 relative group">
+                        <div className="h-1 bg-gray-600 rounded-full">
+                            <div
+                                className="h-1 bg-white rounded-full transition-all"
+                                style={{ width: `${isMuted ? 0 : volume}%` }}
+                            />
+                        </div>
+                        <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={isMuted ? 0 : volume}
+                            onChange={(e) => {
+                                setVolume(parseInt(e.target.value))
+                                if (isMuted) setIsMuted(false)
+                            }}
+                            className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                        />
+                    </div>
                 </div>
             </div>
         </div>

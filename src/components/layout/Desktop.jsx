@@ -11,6 +11,9 @@ import Spotlight from '../system/Spotlight'
 import ContextMenu from '../system/ContextMenu'
 import NotificationCenter from '../system/NotificationCenter'
 import MissionControl from '../system/MissionControl'
+import Screenshot from '../system/Screenshot'
+import HotCorners from '../system/HotCorners'
+import Widgets from '../system/Widgets'
 import DesktopIcon from './DesktopIcon'
 
 const Desktop = () => {
@@ -40,6 +43,9 @@ const Desktop = () => {
             <Spotlight />
             <NotificationCenter />
             <MissionControl />
+            <Widgets />
+            <Screenshot />
+            <HotCorners />
             <ContextMenu />
             <Dock />
         </div>

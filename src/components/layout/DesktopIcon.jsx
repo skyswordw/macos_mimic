@@ -1,7 +1,7 @@
 import React, { useRef } from 'react'
 import Draggable from 'react-draggable'
 import { useStore } from '../../store/useStore'
-import { FaHdd, FaFileAlt } from 'react-icons/fa'
+import { FaHdd, FaFileAlt, FaFolder } from 'react-icons/fa'
 
 const DesktopIcon = ({ icon }) => {
     const { updateIconPosition, openWindow } = useStore()
@@ -12,19 +12,35 @@ const DesktopIcon = ({ icon }) => {
     }
 
     const handleDoubleClick = () => {
-        if (icon.id === 'hd') {
-            openWindow('finder', 'Finder', 'finder')
-        } else if (icon.id === 'readme') {
-            // For now, open a simple alert or maybe a text viewer if we had one.
-            // Let's open Notes as a proxy for now, or just do nothing/log.
-            // Actually, let's open a specific window for Readme if we can, 
-            // but for now let's just open Notes with a title.
-            openWindow('notes', 'Readme.txt', 'notes')
+        if (icon.action && icon.action.type === 'app') {
+            // 根据应用类型，使用合适的标题
+            const appTitles = {
+                'finder': 'Finder',
+                'notes': icon.label || 'Notes',
+                'safari': 'Safari',
+                'terminal': 'Terminal',
+                'settings': 'System Settings'
+            }
+            const title = appTitles[icon.action.value] || icon.label
+            openWindow(icon.action.value, title, icon.action.value)
         }
     }
 
-    const IconComponent = icon.icon === 'hdd' ? FaHdd : FaFileAlt
-    const color = icon.icon === 'hdd' ? 'text-gray-300' : 'text-white'
+    // 根据图标类型选择合适的图标组件和颜色
+    const getIconConfig = () => {
+        switch (icon.icon) {
+            case 'hdd':
+                return { Component: FaHdd, color: 'text-gray-300' }
+            case 'folder':
+                return { Component: FaFolder, color: 'text-blue-400' }
+            case 'file':
+                return { Component: FaFileAlt, color: 'text-white' }
+            default:
+                return { Component: FaFileAlt, color: 'text-white' }
+        }
+    }
+
+    const { Component: IconComponent, color } = getIconConfig()
 
     return (
         <Draggable
@@ -35,11 +51,18 @@ const DesktopIcon = ({ icon }) => {
         >
             <div
                 ref={nodeRef}
+                data-desktop-icon={icon.action?.value || icon.id}
                 className="absolute flex flex-col items-center gap-1 w-24 cursor-pointer group"
                 onDoubleClick={handleDoubleClick}
             >
-                <div className={`w-16 h-16 rounded-lg ${icon.icon === 'hdd' ? '' : 'bg-white/10'} flex items-center justify-center shadow-sm group-hover:bg-white/20 transition-colors border border-transparent group-hover:border-white/20`}>
-                    <IconComponent className={`text-4xl ${color} drop-shadow-lg`} />
+                <div className={`w-16 h-16 rounded-lg flex items-center justify-center shadow-sm transition-all ${
+                    icon.icon === 'hdd'
+                        ? 'bg-transparent group-hover:bg-white/10'
+                        : icon.icon === 'folder'
+                            ? 'bg-blue-500/20 group-hover:bg-blue-500/30'
+                            : 'bg-white/10 group-hover:bg-white/20'
+                } border border-transparent group-hover:border-white/30`}>
+                    <IconComponent className={`text-4xl ${color} drop-shadow-lg transition-transform group-hover:scale-110`} />
                 </div>
                 <span className="text-white text-xs font-medium drop-shadow-md bg-blue-600/0 px-2 py-0.5 rounded group-hover:bg-blue-600/80 transition-colors text-center leading-tight">
                     {icon.label}

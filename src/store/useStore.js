@@ -17,8 +17,9 @@ const persistedSettings = getPersistedSettings()
 export const useStore = create(
     persist(
         (set, get) => ({
-    windows: [], // { id, title, component, isOpen, isMinimised, isMaximized, zIndex, position, size, desktop }
+    windows: persistedSettings.windows || [], // { id, title, component, isOpen, isMinimised, isMaximized, zIndex, position, size, desktop }
     activeWindowId: null,
+    activeApp: null, // 当前活动的应用名称（用于MenuBar）
     zIndexCounter: 10,
     wallpaper: persistedSettings.wallpaper || 'https://4kwallpapers.com/images/wallpapers/macos-monterey-stock-purple-dark-mode-layers-5k-4480x2520-5888.jpg',
     isLogin: false,
@@ -26,15 +27,32 @@ export const useStore = create(
     isSpotlightOpen: false,
     isNotificationCenterOpen: false,
     isMissionControlOpen: false,
+    showWidgets: false,
     brightness: persistedSettings.brightness ?? 100,
     darkMode: persistedSettings.darkMode ?? false,
     soundEnabled: persistedSettings.soundEnabled ?? true,
     soundVolume: persistedSettings.soundVolume ?? 0.3,
     desktopIcons: [
-        { id: 'hd', label: 'Macintosh HD', icon: 'hdd', position: { x: 20, y: 20 } },
-        { id: 'readme', label: 'Readme.txt', icon: 'file', position: { x: 20, y: 120 } }
+        { id: 'hd', label: 'Macintosh HD', icon: 'hdd', position: { x: 20, y: 20 }, action: { type: 'app', value: 'finder' } },
+        { id: 'applications', label: 'Applications', icon: 'folder', position: { x: 20, y: 120 }, action: { type: 'app', value: 'finder' } },
+        { id: 'documents', label: 'Documents', icon: 'folder', position: { x: 20, y: 220 }, action: { type: 'app', value: 'finder' } },
+        { id: 'readme', label: 'Readme.txt', icon: 'file', position: { x: 20, y: 320 }, action: { type: 'app', value: 'notes' } }
     ],
     trashItems: [], // 回收站内容
+
+    // Notification system
+    notifications: persistedSettings.notifications || [],
+
+    // 最近应用（最多保存5个）
+    recentApps: persistedSettings.recentApps || [],
+
+    // 热区配置
+    hotCorners: persistedSettings.hotCorners || {
+        topLeft: 'none',       // 'none' | 'mission-control' | 'desktop' | 'launchpad' | 'notification-center' | 'lock-screen'
+        topRight: 'notification-center',
+        bottomLeft: 'none',
+        bottomRight: 'desktop'
+    },
 
     // 多桌面相关状态
     desktops: [1],
@@ -66,6 +84,12 @@ export const useStore = create(
             soundEffects.click()
         }
         return { isMissionControlOpen: !state.isMissionControlOpen }
+    }),
+    toggleWidgets: () => set((state) => {
+        if (state.soundEnabled && !state.showWidgets) {
+            soundEffects.click()
+        }
+        return { showWidgets: !state.showWidgets }
     }),
     setBrightness: (val) => set({ brightness: val }),
     setWallpaper: (url) => set({ wallpaper: url }),
@@ -107,12 +131,27 @@ export const useStore = create(
         if (state.soundEnabled) {
             soundEffects.windowOpen()
         }
+
+        // Exclude system apps from recent apps
+        const systemApps = ['launchpad', 'spotlight', 'notification-center', 'mission-control']
+        const shouldAddToRecent = !systemApps.includes(id)
+
+        // Update recent apps (keep max 5, most recent first)
+        const updatedRecent = shouldAddToRecent
+            ? [
+                { id, title },
+                ...state.recentApps.filter(app => app.id !== id)
+            ].slice(0, 5)
+            : state.recentApps
+
         const existingWindow = state.windows.find(w => w.id === id);
         if (existingWindow) {
             return {
                 windows: state.windows.map(w => w.id === id ? { ...w, isOpen: true, isMinimised: false, zIndex: state.zIndexCounter + 1, desktop: state.currentDesktop } : w),
                 activeWindowId: id,
-                zIndexCounter: state.zIndexCounter + 1
+                activeApp: title,
+                zIndexCounter: state.zIndexCounter + 1,
+                recentApps: updatedRecent
             };
         }
         // 移动端适配的窗口尺寸和位置
@@ -136,7 +175,9 @@ export const useStore = create(
                 desktop: state.currentDesktop
             }],
             activeWindowId: id,
-            zIndexCounter: state.zIndexCounter + 1
+            activeApp: title,
+            zIndexCounter: state.zIndexCounter + 1,
+            recentApps: updatedRecent
         };
     }),
 
@@ -144,9 +185,11 @@ export const useStore = create(
         if (state.soundEnabled) {
             soundEffects.windowClose()
         }
+        const isClosingActiveWindow = state.activeWindowId === id
         return {
             windows: state.windows.map(w => w.id === id ? { ...w, isOpen: false } : w),
-            activeWindowId: null
+            activeWindowId: isClosingActiveWindow ? null : state.activeWindowId,
+            activeApp: isClosingActiveWindow ? 'Finder' : state.activeApp
         }
     }),
 
@@ -171,11 +214,15 @@ export const useStore = create(
         }
     }),
 
-    focusWindow: (id) => set((state) => ({
-        windows: state.windows.map(w => w.id === id ? { ...w, zIndex: state.zIndexCounter + 1, isMinimised: false } : w),
-        activeWindowId: id,
-        zIndexCounter: state.zIndexCounter + 1
-    })),
+    focusWindow: (id) => set((state) => {
+        const window = state.windows.find(w => w.id === id)
+        return {
+            windows: state.windows.map(w => w.id === id ? { ...w, zIndex: state.zIndexCounter + 1, isMinimised: false } : w),
+            activeWindowId: id,
+            activeApp: window ? window.title : null,
+            zIndexCounter: state.zIndexCounter + 1
+        }
+    }),
 
     updateWindowPosition: (id, position) => set((state) => ({
         windows: state.windows.map(w => w.id === id ? { ...w, position } : w)
@@ -189,6 +236,28 @@ export const useStore = create(
         desktopIcons: state.desktopIcons.map(icon => icon.id === id ? { ...icon, position } : icon)
     })),
 
+    // Auto-arrange desktop icons
+    autoArrangeIcons: () => set((state) => {
+        const gridSize = 100 // pixels between icons
+        const startX = 20
+        const startY = 20
+        const maxRows = Math.floor((window.innerHeight - 200) / gridSize)
+
+        const arranged = state.desktopIcons.map((icon, index) => {
+            const col = Math.floor(index / maxRows)
+            const row = index % maxRows
+            return {
+                ...icon,
+                position: {
+                    x: startX + col * gridSize,
+                    y: startY + row * gridSize
+                }
+            }
+        })
+
+        return { desktopIcons: arranged }
+    }),
+
     // Trash 操作
     moveToTrash: (item) => set((state) => ({
         trashItems: [...state.trashItems, { ...item, deletedAt: new Date().toISOString() }]
@@ -198,10 +267,53 @@ export const useStore = create(
         trashItems: state.trashItems.filter(item => item.id !== id)
     })),
 
-    emptyTrash: () => set({ trashItems: [] }),
+    emptyTrash: () => {
+        soundEffects.emptyTrash()
+        return set({ trashItems: [] })
+    },
 
     deleteFromTrash: (id) => set((state) => ({
         trashItems: state.trashItems.filter(item => item.id !== id)
+    })),
+
+    // Notification actions
+    addNotification: (notification) => set((state) => {
+        if (state.soundEnabled) {
+            soundEffects.notification()
+        }
+        const newNotification = {
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            read: false,
+            ...notification
+        }
+        return {
+            notifications: [newNotification, ...state.notifications].slice(0, 50) // Keep max 50 notifications
+        }
+    }),
+
+    dismissNotification: (id) => set((state) => ({
+        notifications: state.notifications.filter(n => n.id !== id)
+    })),
+
+    markNotificationRead: (id) => set((state) => ({
+        notifications: state.notifications.map(n =>
+            n.id === id ? { ...n, read: true } : n
+        )
+    })),
+
+    markAllNotificationsRead: () => set((state) => ({
+        notifications: state.notifications.map(n => ({ ...n, read: true }))
+    })),
+
+    clearAllNotifications: () => set({ notifications: [] }),
+
+    // Hot Corners actions
+    setHotCornerAction: (corner, action) => set((state) => ({
+        hotCorners: {
+            ...state.hotCorners,
+            [corner]: action
+        }
     })),
 }),
         {
@@ -213,6 +325,19 @@ export const useStore = create(
                 soundEnabled: state.soundEnabled,
                 soundVolume: state.soundVolume,
                 trashItems: state.trashItems,
+                notifications: state.notifications,
+                recentApps: state.recentApps,
+                hotCorners: state.hotCorners,
+                // Save window positions and sizes (but not open/minimized state)
+                windows: state.windows.map(w => ({
+                    id: w.id,
+                    title: w.title,
+                    component: w.component,
+                    position: w.position,
+                    size: w.size,
+                    desktop: w.desktop || 1,
+                    // Don't save: isOpen, isMinimised, isMaximized, zIndex
+                })),
             }),
         }
     )

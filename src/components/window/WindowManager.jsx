@@ -14,6 +14,11 @@ import Messages from '../../apps/Messages'
 import Photos from '../../apps/Photos'
 import Calendar from '../../apps/Calendar'
 import Trash from '../../apps/Trash'
+import Weather from '../../apps/Weather'
+import Mail from '../../apps/Mail'
+import Reminders from '../../apps/Reminders'
+import ActivityMonitor from '../../apps/ActivityMonitor'
+import Preview from '../../apps/Preview'
 
 const WindowManager = () => {
     const { windows, currentDesktop } = useStore()
@@ -32,6 +37,11 @@ const WindowManager = () => {
             case 'photos': return <Photos />
             case 'calendar': return <Calendar />
             case 'trash': return <Trash />
+            case 'weather': return <Weather />
+            case 'mail': return <Mail />
+            case 'reminders': return <Reminders />
+            case 'activity-monitor': return <ActivityMonitor />
+            case 'preview': return <Preview />
             default: return <div className="p-4">App not implemented yet</div>
         }
     }

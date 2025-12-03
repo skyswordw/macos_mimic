@@ -237,6 +237,288 @@ class SoundEffects {
         oscillator.stop(now + 0.3)
     }
 
+    // 启动音效 (Boot chime - macOS风格)
+    startup() {
+        if (!this.enabled) return
+        this.init()
+        const now = this.audioContext.currentTime
+
+        // F#maj7 和弦 - macOS启动音
+        const frequencies = [369.99, 466.16, 554.37, 698.46] // F#, A#, C#, F#
+        frequencies.forEach((freq, i) => {
+            const oscillator = this.audioContext.createOscillator()
+            const gainNode = this.audioContext.createGain()
+
+            oscillator.connect(gainNode)
+            gainNode.connect(this.audioContext.destination)
+
+            oscillator.type = 'sine'
+            oscillator.frequency.value = freq
+
+            gainNode.gain.setValueAtTime(0, now)
+            gainNode.gain.linearRampToValueAtTime(0.15 * this.volume, now + 0.1)
+            gainNode.gain.setValueAtTime(0.15 * this.volume, now + 0.8)
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1.5)
+
+            oscillator.start(now)
+            oscillator.stop(now + 1.5)
+        })
+    }
+
+    // 清空回收站音效
+    emptyTrash() {
+        if (!this.enabled) return
+        this.init()
+        const now = this.audioContext.currentTime
+
+        // 碎纸声 - 使用噪音和滤波器
+        const bufferSize = this.audioContext.sampleRate * 0.5
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate)
+        const data = buffer.getChannelData(0)
+
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3))
+        }
+
+        const noise = this.audioContext.createBufferSource()
+        const filter = this.audioContext.createBiquadFilter()
+        const gainNode = this.audioContext.createGain()
+
+        noise.buffer = buffer
+        filter.type = 'highpass'
+        filter.frequency.value = 2000
+
+        noise.connect(filter)
+        filter.connect(gainNode)
+        gainNode.connect(this.audioContext.destination)
+
+        gainNode.gain.setValueAtTime(0.3 * this.volume, now)
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5)
+
+        noise.start(now)
+    }
+
+    // 截图音效 (相机快门声)
+    screenshot() {
+        if (!this.enabled) return
+        this.init()
+        const now = this.audioContext.currentTime
+
+        // 快门机械声
+        const bufferSize = this.audioContext.sampleRate * 0.15
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate)
+        const data = buffer.getChannelData(0)
+
+        for (let i = 0; i < bufferSize; i++) {
+            const t = i / this.audioContext.sampleRate
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 30)
+        }
+
+        const noise = this.audioContext.createBufferSource()
+        const filter = this.audioContext.createBiquadFilter()
+        const gainNode = this.audioContext.createGain()
+
+        noise.buffer = buffer
+        filter.type = 'bandpass'
+        filter.frequency.value = 3000
+        filter.Q.value = 1
+
+        noise.connect(filter)
+        filter.connect(gainNode)
+        gainNode.connect(this.audioContext.destination)
+
+        gainNode.gain.setValueAtTime(0.4 * this.volume, now)
+
+        noise.start(now)
+    }
+
+    // 按键音效
+    keyPress() {
+        if (!this.enabled) return
+        this.play(1200, 0.03, 'square', 0.05 * this.volume)
+    }
+
+    // Whoosh 音效 (用于动画过渡)
+    whoosh() {
+        if (!this.enabled) return
+        this.init()
+        const now = this.audioContext.currentTime
+
+        const bufferSize = this.audioContext.sampleRate * 0.2
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate)
+        const data = buffer.getChannelData(0)
+
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * i / bufferSize)
+        }
+
+        const noise = this.audioContext.createBufferSource()
+        const filter = this.audioContext.createBiquadFilter()
+        const gainNode = this.audioContext.createGain()
+
+        noise.buffer = buffer
+        filter.type = 'lowpass'
+        filter.frequency.setValueAtTime(500, now)
+        filter.frequency.exponentialRampToValueAtTime(2000, now + 0.1)
+        filter.frequency.exponentialRampToValueAtTime(500, now + 0.2)
+
+        noise.connect(filter)
+        filter.connect(gainNode)
+        gainNode.connect(this.audioContext.destination)
+
+        gainNode.gain.setValueAtTime(0.15 * this.volume, now)
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2)
+
+        noise.start(now)
+    }
+
+    // 成功/完成音效
+    success() {
+        if (!this.enabled) return
+        this.init()
+        const now = this.audioContext.currentTime
+
+        // 上升的两个音符
+        const frequencies = [523.25, 783.99] // C5, G5
+        frequencies.forEach((freq, i) => {
+            const oscillator = this.audioContext.createOscillator()
+            const gainNode = this.audioContext.createGain()
+
+            oscillator.connect(gainNode)
+            gainNode.connect(this.audioContext.destination)
+
+            oscillator.type = 'sine'
+            oscillator.frequency.value = freq
+
+            gainNode.gain.setValueAtTime(0.2 * this.volume, now + i * 0.08)
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.2)
+
+            oscillator.start(now + i * 0.08)
+            oscillator.stop(now + i * 0.08 + 0.2)
+        })
+    }
+
+    // 拖放音效
+    drop() {
+        if (!this.enabled) return
+        this.init()
+        const now = this.audioContext.currentTime
+
+        const oscillator = this.audioContext.createOscillator()
+        const gainNode = this.audioContext.createGain()
+
+        oscillator.connect(gainNode)
+        gainNode.connect(this.audioContext.destination)
+
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(600, now)
+        oscillator.frequency.exponentialRampToValueAtTime(400, now + 0.1)
+
+        gainNode.gain.setValueAtTime(0.2 * this.volume, now)
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1)
+
+        oscillator.start(now)
+        oscillator.stop(now + 0.1)
+    }
+
+    // 登录音效
+    login() {
+        if (!this.enabled) return
+        this.init()
+        const now = this.audioContext.currentTime
+
+        // 欢迎和弦
+        const frequencies = [392, 493.88, 587.33, 783.99] // G4, B4, D5, G5
+        frequencies.forEach((freq, i) => {
+            const oscillator = this.audioContext.createOscillator()
+            const gainNode = this.audioContext.createGain()
+
+            oscillator.connect(gainNode)
+            gainNode.connect(this.audioContext.destination)
+
+            oscillator.type = 'sine'
+            oscillator.frequency.value = freq
+
+            gainNode.gain.setValueAtTime(0, now + i * 0.05)
+            gainNode.gain.linearRampToValueAtTime(0.12 * this.volume, now + i * 0.05 + 0.05)
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.4)
+
+            oscillator.start(now + i * 0.05)
+            oscillator.stop(now + i * 0.05 + 0.4)
+        })
+    }
+
+    // 弹出/Pop音效
+    pop() {
+        if (!this.enabled) return
+        this.init()
+        const now = this.audioContext.currentTime
+
+        const oscillator = this.audioContext.createOscillator()
+        const gainNode = this.audioContext.createGain()
+
+        oscillator.connect(gainNode)
+        gainNode.connect(this.audioContext.destination)
+
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(400, now)
+        oscillator.frequency.exponentialRampToValueAtTime(600, now + 0.05)
+
+        gainNode.gain.setValueAtTime(0.25 * this.volume, now)
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08)
+
+        oscillator.start(now)
+        oscillator.stop(now + 0.08)
+    }
+
+    // 提醒/警告音效
+    alert() {
+        if (!this.enabled) return
+        this.init()
+        const now = this.audioContext.currentTime
+
+        // 三次重复的提示音
+        for (let j = 0; j < 3; j++) {
+            const oscillator = this.audioContext.createOscillator()
+            const gainNode = this.audioContext.createGain()
+
+            oscillator.connect(gainNode)
+            gainNode.connect(this.audioContext.destination)
+
+            oscillator.type = 'sine'
+            oscillator.frequency.value = 880
+
+            gainNode.gain.setValueAtTime(0.2 * this.volume, now + j * 0.15)
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + j * 0.15 + 0.1)
+
+            oscillator.start(now + j * 0.15)
+            oscillator.stop(now + j * 0.15 + 0.1)
+        }
+    }
+
+    // 锁屏音效
+    lock() {
+        if (!this.enabled) return
+        this.init()
+        const now = this.audioContext.currentTime
+
+        const oscillator = this.audioContext.createOscillator()
+        const gainNode = this.audioContext.createGain()
+
+        oscillator.connect(gainNode)
+        gainNode.connect(this.audioContext.destination)
+
+        oscillator.type = 'triangle'
+        oscillator.frequency.setValueAtTime(500, now)
+        oscillator.frequency.exponentialRampToValueAtTime(300, now + 0.15)
+
+        gainNode.gain.setValueAtTime(0.2 * this.volume, now)
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15)
+
+        oscillator.start(now)
+        oscillator.stop(now + 0.15)
+    }
+
     // 启用/禁用音效
     toggle() {
         this.enabled = !this.enabled

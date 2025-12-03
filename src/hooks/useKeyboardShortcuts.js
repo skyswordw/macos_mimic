@@ -99,6 +99,26 @@ export const useKeyboardShortcuts = () => {
                         e.preventDefault()
                         openWindow('photos', 'Photos', 'photos')
                         break
+                    case 'm':
+                        e.preventDefault()
+                        openWindow('mail', 'Mail', 'mail')
+                        break
+                    case 'w':
+                        e.preventDefault()
+                        openWindow('weather', 'Weather', 'weather')
+                        break
+                    case 'r':
+                        e.preventDefault()
+                        openWindow('reminders', 'Reminders', 'reminders')
+                        break
+                    case 'v':
+                        e.preventDefault()
+                        openWindow('vscode', 'VS Code', 'vscode')
+                        break
+                    case 'u':
+                        e.preventDefault()
+                        openWindow('music', 'Music', 'music')
+                        break
                 }
                 return
             }
