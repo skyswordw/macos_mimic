@@ -7,14 +7,14 @@ const apps = [
     { id: 'launchpad', title: 'Launchpad', icon: FaRocket, color: 'text-gray-500' },
     { id: 'finder', title: 'Finder', icon: FaFolderOpen, color: 'text-blue-500' },
     { id: 'safari', title: 'Safari', icon: FaSafari, color: 'text-blue-400' },
-    { id: 'mail', title: 'Mail', icon: FaEnvelope, color: 'text-blue-500' },
-    { id: 'messages', title: 'Messages', icon: FaComments, color: 'text-green-500' },
+    { id: 'mail', title: 'Mail', icon: FaEnvelope, color: 'text-blue-500', badgeKey: 'mail' },
+    { id: 'messages', title: 'Messages', icon: FaComments, color: 'text-green-500', badgeKey: 'messages' },
     { id: 'music', title: 'Music', icon: FaMusic, color: 'text-red-500' },
     { id: 'photos', title: 'Photos', icon: FaImage, color: 'text-pink-500' },
     { id: 'textedit', title: 'TextEdit', icon: FaFileAlt, color: 'text-gray-600' },
     { id: 'preview', title: 'Preview', icon: FaFileImage, color: 'text-orange-400' },
-    { id: 'calendar', title: 'Calendar', icon: FaCalendarAlt, color: 'text-red-500' },
-    { id: 'reminders', title: 'Reminders', icon: FaTasks, color: 'text-orange-500' },
+    { id: 'calendar', title: 'Calendar', icon: FaCalendarAlt, color: 'text-red-500', badgeKey: 'calendar' },
+    { id: 'reminders', title: 'Reminders', icon: FaTasks, color: 'text-orange-500', badgeKey: 'reminders' },
     { id: 'weather', title: 'Weather', icon: FaCloudSun, color: 'text-cyan-500' },
     { id: 'vscode', title: 'VS Code', icon: FaCode, color: 'text-blue-600' },
     { id: 'terminal', title: 'Terminal', icon: FaTerminal, color: 'text-gray-700' },
@@ -22,13 +22,28 @@ const apps = [
     { id: 'calculator', title: 'Calculator', icon: FaCalculator, color: 'text-gray-600' },
     { id: 'notes', title: 'Notes', icon: FaRegStickyNote, color: 'text-yellow-500' },
     { id: 'settings', title: 'Settings', icon: FaCog, color: 'text-gray-500' },
-    { id: 'trash', title: 'Trash', icon: FaTrash, color: 'text-gray-400' },
+    { id: 'trash', title: 'Trash', icon: FaTrash, color: 'text-gray-400', badgeKey: 'trash' },
 ]
+
+// Simulated badge counts (in a real app, this would come from store)
+const useBadgeCounts = () => {
+    const { notifications, trashItems } = useStore()
+    const unreadNotifications = notifications.filter(n => !n.read).length
+
+    return {
+        mail: 3, // Simulated unread mail
+        messages: 2, // Simulated unread messages
+        calendar: 0,
+        reminders: 5, // Simulated pending reminders
+        trash: trashItems.length,
+    }
+}
 
 const DockItem = ({ mouseX, app }) => {
     const { openWindow, windows, toggleLaunchpad, focusWindow, darkMode } = useStore()
     const [showTooltip, setShowTooltip] = React.useState(false)
     const [isBouncing, setIsBouncing] = React.useState(false)
+    const badgeCounts = useBadgeCounts()
 
     let ref = React.useRef(null)
     let distance = useTransform(mouseX, (val) => {
@@ -44,6 +59,9 @@ const DockItem = ({ mouseX, app }) => {
     const windowState = windows.find(w => w.id === app.id)
     const isOpen = windowState && windowState.isOpen
     const isMinimized = windowState && windowState.isMinimised
+
+    // Get badge count for this app
+    const badgeCount = app.badgeKey ? badgeCounts[app.badgeKey] : 0
 
     const handleClick = () => {
         setIsBouncing(true)
@@ -108,6 +126,20 @@ const DockItem = ({ mouseX, app }) => {
                 } : {}}
             >
                 <app.icon className={`w-3/5 h-3/5 ${app.color}`} />
+
+                {/* Badge */}
+                {badgeCount > 0 && (
+                    <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center px-1"
+                    >
+                        <span className="text-white text-[10px] font-bold">
+                            {badgeCount > 99 ? '99+' : badgeCount}
+                        </span>
+                    </motion.div>
+                )}
+
                 {/* 最小化指示器 - 半透明覆盖层 */}
                 {isMinimized && (
                     <motion.div

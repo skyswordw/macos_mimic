@@ -14,6 +14,7 @@ import MissionControl from '../system/MissionControl'
 import Screenshot from '../system/Screenshot'
 import HotCorners from '../system/HotCorners'
 import Widgets from '../system/Widgets'
+import AppSwitcher from '../system/AppSwitcher'
 import DesktopIcon from './DesktopIcon'
 
 const Desktop = () => {
@@ -48,6 +49,7 @@ const Desktop = () => {
             <HotCorners />
             <ContextMenu />
             <Dock />
+            <AppSwitcher />
         </div>
     )
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { FaApple, FaWifi, FaBatteryFull, FaSearch, FaToggleOn, FaTh, FaThLarge } from 'react-icons/fa'
 import { format } from 'date-fns'
 import { useStore } from '../../store/useStore'
+import ControlCenter from '../system/ControlCenter'
 
 // 菜单项配置（包含快捷键）
 const menuItem = (label, shortcut = null, action = null) => ({ label, shortcut, action })
@@ -429,34 +430,7 @@ const MenuBar = () => {
                             className={`text-xl cursor-pointer ${showControlCenter ? 'text-white' : 'text-gray-200'}`}
                             onClick={toggleControlCenter}
                         />
-                        {showControlCenter && (
-                            <div className="absolute top-8 right-0 w-80 bg-gray-100/90 backdrop-blur-xl rounded-2xl shadow-xl text-black p-4 border border-gray-200 flex flex-col gap-4">
-                                <div className="flex gap-4">
-                                    <div className="flex-1 bg-white/50 rounded-xl p-3 flex flex-col gap-2">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white"><FaWifi /></div>
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-xs">Wi-Fi</span>
-                                                <span className="text-[10px] text-gray-500">Home Network</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white"><FaToggleOn /></div>
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-xs">Bluetooth</span>
-                                                <span className="text-[10px] text-gray-500">On</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 bg-white/50 rounded-xl p-3">
-                                        <div className="text-xs font-bold mb-2">Display</div>
-                                        <input type="range" className="w-full accent-blue-500" />
-                                        <div className="text-xs font-bold mt-4 mb-2">Sound</div>
-                                        <input type="range" className="w-full accent-blue-500" />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        <ControlCenter isOpen={showControlCenter} onClose={() => setShowControlCenter(false)} />
                     </div>
                     <span
                         className="font-medium min-w-[80px] text-right cursor-pointer hover:bg-white/20 px-2 py-0.5 rounded transition-colors select-none"

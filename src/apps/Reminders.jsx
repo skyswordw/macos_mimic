@@ -9,6 +9,87 @@ import {
 const Reminders = () => {
     const { darkMode, addNotification } = useStore()
 
+    // Load reminders from localStorage
+    const loadReminders = () => {
+        try {
+            const saved = localStorage.getItem('reminders-data')
+            if (saved) {
+                return JSON.parse(saved)
+            }
+        } catch (e) {
+            console.error('Failed to load reminders:', e)
+        }
+        // Default reminders
+        return [
+            {
+                id: 1,
+                title: 'Review project proposal',
+                notes: 'Check the budget section and timeline',
+                list: 'work',
+                dueDate: new Date().toISOString().split('T')[0],
+                dueTime: '14:00',
+                flagged: true,
+                completed: false,
+                priority: 'high'
+            },
+            {
+                id: 2,
+                title: 'Buy groceries',
+                notes: 'Milk, eggs, bread, vegetables',
+                list: 'shopping',
+                dueDate: new Date().toISOString().split('T')[0],
+                dueTime: null,
+                flagged: false,
+                completed: false,
+                priority: 'medium'
+            },
+            {
+                id: 3,
+                title: 'Call dentist',
+                notes: 'Schedule annual checkup',
+                list: 'personal',
+                dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+                dueTime: '10:00',
+                flagged: false,
+                completed: false,
+                priority: 'low'
+            },
+            {
+                id: 4,
+                title: 'Finish presentation slides',
+                notes: 'Add charts and final review',
+                list: 'work',
+                dueDate: new Date(Date.now() + 172800000).toISOString().split('T')[0],
+                dueTime: '09:00',
+                flagged: true,
+                completed: false,
+                priority: 'high'
+            },
+            {
+                id: 5,
+                title: 'Exercise',
+                notes: '30 minutes cardio',
+                list: 'personal',
+                dueDate: new Date().toISOString().split('T')[0],
+                dueTime: '18:00',
+                flagged: false,
+                completed: true,
+                priority: 'medium'
+            },
+            {
+                id: 6,
+                title: 'Read book',
+                notes: 'Chapter 5-7',
+                list: 'personal',
+                dueDate: null,
+                dueTime: null,
+                flagged: false,
+                completed: false,
+                priority: 'low'
+            }
+        ]
+    }
+
     const [lists, setLists] = useState([
         { id: 'today', name: 'Today', icon: FaCalendarAlt, color: 'text-blue-500', smart: true },
         { id: 'scheduled', name: 'Scheduled', icon: FaClock, color: 'text-red-500', smart: true },
@@ -19,74 +100,12 @@ const Reminders = () => {
         { id: 'shopping', name: 'Shopping', icon: FaList, color: 'text-green-500', smart: false }
     ])
 
-    const [reminders, setReminders] = useState([
-        {
-            id: 1,
-            title: 'Review project proposal',
-            notes: 'Check the budget section and timeline',
-            list: 'work',
-            dueDate: new Date().toISOString().split('T')[0],
-            dueTime: '14:00',
-            flagged: true,
-            completed: false,
-            priority: 'high'
-        },
-        {
-            id: 2,
-            title: 'Buy groceries',
-            notes: 'Milk, eggs, bread, vegetables',
-            list: 'shopping',
-            dueDate: new Date().toISOString().split('T')[0],
-            dueTime: null,
-            flagged: false,
-            completed: false,
-            priority: 'medium'
-        },
-        {
-            id: 3,
-            title: 'Call dentist',
-            notes: 'Schedule annual checkup',
-            list: 'personal',
-            dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-            dueTime: '10:00',
-            flagged: false,
-            completed: false,
-            priority: 'low'
-        },
-        {
-            id: 4,
-            title: 'Finish presentation slides',
-            notes: 'Add charts and final review',
-            list: 'work',
-            dueDate: new Date(Date.now() + 172800000).toISOString().split('T')[0],
-            dueTime: '09:00',
-            flagged: true,
-            completed: false,
-            priority: 'high'
-        },
-        {
-            id: 5,
-            title: 'Exercise',
-            notes: '30 minutes cardio',
-            list: 'personal',
-            dueDate: new Date().toISOString().split('T')[0],
-            dueTime: '18:00',
-            flagged: false,
-            completed: true,
-            priority: 'medium'
-        },
-        {
-            id: 6,
-            title: 'Read book',
-            notes: 'Chapter 5-7',
-            list: 'personal',
-            dueDate: null,
-            dueTime: null,
-            flagged: false,
-            completed: false,
-            priority: 'low'
-        }
-    ])
+    const [reminders, setReminders] = useState(loadReminders)
+
+    // Save reminders to localStorage whenever they change
+    useEffect(() => {
+        localStorage.setItem('reminders-data', JSON.stringify(reminders))
+    }, [reminders])
 
     const [selectedList, setSelectedList] = useState('today')
     const [selectedReminder, setSelectedReminder] = useState(null)
