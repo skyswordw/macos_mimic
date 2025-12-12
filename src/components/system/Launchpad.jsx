@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { FaSearch, FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaTrash, FaCode, FaMusic, FaComments, FaImage, FaCalendarAlt, FaCloudSun, FaEnvelope, FaTasks, FaChartArea, FaFileImage, FaFileAlt } from 'react-icons/fa'
@@ -23,13 +23,64 @@ const apps = [
     { id: 'settings', title: 'Settings', icon: FaCog, color: 'text-gray-500' },
 ]
 
+// Items per page based on screen size
+const ITEMS_PER_PAGE = 21 // 7 columns x 3 rows for desktop
+
 const Launchpad = () => {
     const { isLaunchpadOpen, toggleLaunchpad, openWindow, darkMode } = useStore()
     const [search, setSearch] = useState('')
+    const [currentPage, setCurrentPage] = useState(0)
+    const inputRef = useRef(null)
+
+    // Keyboard handler for ESC and arrow keys
+    useEffect(() => {
+        if (!isLaunchpadOpen) return
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                toggleLaunchpad()
+            } else if (e.key === 'ArrowLeft' && currentPage > 0) {
+                setCurrentPage(prev => prev - 1)
+            } else if (e.key === 'ArrowRight') {
+                // Calculate totalPages inline to avoid dependency issues
+                const currentFilteredApps = apps.filter(app =>
+                    app.title.toLowerCase().includes(search.toLowerCase())
+                )
+                const totalPages = Math.ceil(currentFilteredApps.length / ITEMS_PER_PAGE)
+                if (currentPage < totalPages - 1) {
+                    setCurrentPage(prev => prev + 1)
+                }
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [isLaunchpadOpen, toggleLaunchpad, currentPage, search])
+
+    // Reset page when search changes
+    useEffect(() => {
+        setCurrentPage(0)
+    }, [search])
+
+    // Focus search input when opened
+    useEffect(() => {
+        if (isLaunchpadOpen) {
+            setSearch('')
+            setCurrentPage(0)
+            setTimeout(() => inputRef.current?.focus(), 100)
+        }
+    }, [isLaunchpadOpen])
 
     if (!isLaunchpadOpen) return null
 
     const filteredApps = apps.filter(app => app.title.toLowerCase().includes(search.toLowerCase()))
+
+    // Pagination
+    const totalPages = Math.ceil(filteredApps.length / ITEMS_PER_PAGE)
+    const paginatedApps = filteredApps.slice(
+        currentPage * ITEMS_PER_PAGE,
+        (currentPage + 1) * ITEMS_PER_PAGE
+    )
 
     const handleAppClick = (app) => {
         openWindow(app.id, app.title, app.id)
@@ -61,6 +112,7 @@ const Launchpad = () => {
                 >
                     <FaSearch className={`transition-colors duration-500 ${darkMode ? 'text-gray-300' : 'text-gray-500'}`} />
                     <input
+                        ref={inputRef}
                         type="text"
                         placeholder="Search"
                         className={`bg-transparent border-none outline-none flex-1 transition-colors duration-500 ${
@@ -68,7 +120,6 @@ const Launchpad = () => {
                         }`}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        autoFocus
                     />
                 </motion.div>
 
@@ -76,7 +127,7 @@ const Launchpad = () => {
                     className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 gap-6 sm:gap-8 md:gap-12 max-w-5xl px-4"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {filteredApps.map((app, index) => (
+                    {paginatedApps.map((app, index) => (
                         <motion.div
                             key={app.id}
                             initial={{ scale: 0, opacity: 0 }}
@@ -108,6 +159,41 @@ const Launchpad = () => {
                         </motion.div>
                     ))}
                 </div>
+
+                {/* Page dots */}
+                {totalPages > 1 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="flex items-center justify-center gap-2 mt-8 sm:mt-12"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {Array.from({ length: totalPages }).map((_, index) => (
+                            <button
+                                key={index}
+                                onClick={() => setCurrentPage(index)}
+                                className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                                    currentPage === index
+                                        ? 'bg-white w-6'
+                                        : 'bg-white/40 hover:bg-white/60'
+                                }`}
+                            />
+                        ))}
+                    </motion.div>
+                )}
+
+                {/* Empty state */}
+                {paginatedApps.length === 0 && search && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-white/60 text-center mt-8"
+                    >
+                        <p className="text-lg">No apps found</p>
+                        <p className="text-sm mt-1">Try a different search term</p>
+                    </motion.div>
+                )}
             </motion.div>
         </AnimatePresence>
     )

@@ -167,16 +167,55 @@ const citiesWeather = {
     }
 }
 
+// Load saved cities from localStorage
+const loadSavedCities = () => {
+    try {
+        const saved = localStorage.getItem('weather-saved-cities')
+        if (saved) {
+            const cities = JSON.parse(saved)
+            if (Array.isArray(cities) && cities.length > 0) {
+                return cities
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load saved cities:', e)
+    }
+    return ['San Francisco', 'New York', 'London']
+}
+
+// Load selected city from localStorage
+const loadSelectedCity = () => {
+    try {
+        const saved = localStorage.getItem('weather-selected-city')
+        if (saved && citiesWeather[saved]) {
+            return saved
+        }
+    } catch (e) {
+        console.error('Failed to load selected city:', e)
+    }
+    return 'San Francisco'
+}
+
 const Weather = () => {
     const { darkMode } = useStore()
-    const [selectedCity, setSelectedCity] = useState('San Francisco')
+    const [selectedCity, setSelectedCity] = useState(loadSelectedCity)
     const [searchQuery, setSearchQuery] = useState('')
     const [showSearch, setShowSearch] = useState(false)
-    const [savedCities, setSavedCities] = useState(['San Francisco', 'New York', 'London'])
+    const [savedCities, setSavedCities] = useState(loadSavedCities)
 
     const weather = citiesWeather[selectedCity]
     const condition = weatherConditions[weather.condition]
     const WeatherIcon = condition.icon
+
+    // Save cities to localStorage
+    useEffect(() => {
+        localStorage.setItem('weather-saved-cities', JSON.stringify(savedCities))
+    }, [savedCities])
+
+    // Save selected city to localStorage
+    useEffect(() => {
+        localStorage.setItem('weather-selected-city', selectedCity)
+    }, [selectedCity])
 
     const cities = Object.keys(citiesWeather)
     const filteredCities = cities.filter(city =>
