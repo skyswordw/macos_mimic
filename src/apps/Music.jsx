@@ -1,5 +1,28 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaRandom, FaRedo, FaVolumeUp, FaVolumeMute, FaHeart, FaRegHeart, FaSearch, FaList, FaMusic, FaHome, FaCompactDisc, FaUser } from 'react-icons/fa'
+import { useStore } from '../store/useStore'
+
+// Load liked songs from localStorage
+const loadLikedSongs = () => {
+    try {
+        const saved = localStorage.getItem('music-liked-songs')
+        if (saved) return JSON.parse(saved)
+    } catch (e) {
+        console.error('Failed to load liked songs:', e)
+    }
+    return [2, 4, 6] // Default liked song IDs
+}
+
+// Load music settings from localStorage
+const loadMusicSettings = () => {
+    try {
+        const saved = localStorage.getItem('music-settings')
+        if (saved) return JSON.parse(saved)
+    } catch (e) {
+        console.error('Failed to load music settings:', e)
+    }
+    return { volume: 75, shuffle: false, repeat: false }
+}
 
 // Audio synthesis engine for generating music
 class MusicSynthesizer {
@@ -190,89 +213,95 @@ class MusicSynthesizer {
 
 const synthesizer = new MusicSynthesizer()
 
+// Default songs data
+const defaultSongs = [
+    {
+        id: 1,
+        title: 'Blinding Lights',
+        artist: 'The Weeknd',
+        album: 'After Hours',
+        duration: '3:20',
+        durationSec: 200,
+        cover: 'https://picsum.photos/seed/1/200'
+    },
+    {
+        id: 2,
+        title: 'Levitating',
+        artist: 'Dua Lipa',
+        album: 'Future Nostalgia',
+        duration: '3:23',
+        durationSec: 203,
+        cover: 'https://picsum.photos/seed/2/200'
+    },
+    {
+        id: 3,
+        title: 'Heat Waves',
+        artist: 'Glass Animals',
+        album: 'Dreamland',
+        duration: '3:58',
+        durationSec: 238,
+        cover: 'https://picsum.photos/seed/3/200'
+    },
+    {
+        id: 4,
+        title: 'Stay',
+        artist: 'The Kid LAROI, Justin Bieber',
+        album: 'Stay',
+        duration: '2:21',
+        durationSec: 141,
+        cover: 'https://picsum.photos/seed/4/200'
+    },
+    {
+        id: 5,
+        title: 'Good 4 U',
+        artist: 'Olivia Rodrigo',
+        album: 'SOUR',
+        duration: '2:58',
+        durationSec: 178,
+        cover: 'https://picsum.photos/seed/5/200'
+    },
+    {
+        id: 6,
+        title: 'Shivers',
+        artist: 'Ed Sheeran',
+        album: '=',
+        duration: '3:27',
+        durationSec: 207,
+        cover: 'https://picsum.photos/seed/6/200'
+    },
+    {
+        id: 7,
+        title: 'Industry Baby',
+        artist: 'Lil Nas X, Jack Harlow',
+        album: 'MONTERO',
+        duration: '3:32',
+        durationSec: 212,
+        cover: 'https://picsum.photos/seed/7/200'
+    },
+    {
+        id: 8,
+        title: 'Bad Habits',
+        artist: 'Ed Sheeran',
+        album: '=',
+        duration: '3:50',
+        durationSec: 230,
+        cover: 'https://picsum.photos/seed/8/200'
+    }
+]
+
 const Music = () => {
-    const [songs, setSongs] = useState([
-        {
-            id: 1,
-            title: 'Blinding Lights',
-            artist: 'The Weeknd',
-            album: 'After Hours',
-            duration: '3:20',
-            durationSec: 200,
-            cover: 'https://picsum.photos/seed/1/200',
-            liked: false
-        },
-        {
-            id: 2,
-            title: 'Levitating',
-            artist: 'Dua Lipa',
-            album: 'Future Nostalgia',
-            duration: '3:23',
-            durationSec: 203,
-            cover: 'https://picsum.photos/seed/2/200',
-            liked: true
-        },
-        {
-            id: 3,
-            title: 'Heat Waves',
-            artist: 'Glass Animals',
-            album: 'Dreamland',
-            duration: '3:58',
-            durationSec: 238,
-            cover: 'https://picsum.photos/seed/3/200',
-            liked: false
-        },
-        {
-            id: 4,
-            title: 'Stay',
-            artist: 'The Kid LAROI, Justin Bieber',
-            album: 'Stay',
-            duration: '2:21',
-            durationSec: 141,
-            cover: 'https://picsum.photos/seed/4/200',
-            liked: true
-        },
-        {
-            id: 5,
-            title: 'Good 4 U',
-            artist: 'Olivia Rodrigo',
-            album: 'SOUR',
-            duration: '2:58',
-            durationSec: 178,
-            cover: 'https://picsum.photos/seed/5/200',
-            liked: false
-        },
-        {
-            id: 6,
-            title: 'Shivers',
-            artist: 'Ed Sheeran',
-            album: '=',
-            duration: '3:27',
-            durationSec: 207,
-            cover: 'https://picsum.photos/seed/6/200',
-            liked: true
-        },
-        {
-            id: 7,
-            title: 'Industry Baby',
-            artist: 'Lil Nas X, Jack Harlow',
-            album: 'MONTERO',
-            duration: '3:32',
-            durationSec: 212,
-            cover: 'https://picsum.photos/seed/7/200',
-            liked: false
-        },
-        {
-            id: 8,
-            title: 'Bad Habits',
-            artist: 'Ed Sheeran',
-            album: '=',
-            duration: '3:50',
-            durationSec: 230,
-            cover: 'https://picsum.photos/seed/8/200',
-            liked: false
-        }
-    ])
+    const { addNotification } = useStore()
+
+    // Load saved liked songs
+    const likedSongIds = loadLikedSongs()
+    const savedSettings = loadMusicSettings()
+
+    const [songs, setSongs] = useState(() =>
+        defaultSongs.map(song => ({
+            ...song,
+            liked: likedSongIds.includes(song.id)
+        }))
+    )
 
     const [playlists] = useState([
         { id: 1, name: 'Liked Songs', count: 42, icon: FaHeart, color: 'text-red-500' },
@@ -284,15 +313,26 @@ const Music = () => {
     const [currentSong, setCurrentSong] = useState(songs[0])
     const [isPlaying, setIsPlaying] = useState(false)
     const [currentTime, setCurrentTime] = useState(0)
-    const [volume, setVolume] = useState(75)
+    const [volume, setVolume] = useState(savedSettings.volume)
     const [isMuted, setIsMuted] = useState(false)
-    const [shuffle, setShuffle] = useState(false)
-    const [repeat, setRepeat] = useState(false)
+    const [shuffle, setShuffle] = useState(savedSettings.shuffle)
+    const [repeat, setRepeat] = useState(savedSettings.repeat)
     const [searchTerm, setSearchTerm] = useState('')
     const [currentView, setCurrentView] = useState('library')
     const [likedSongs, setLikedSongs] = useState(songs.filter(s => s.liked))
 
     const progressInterval = useRef(null)
+
+    // Save liked songs to localStorage
+    useEffect(() => {
+        const likedIds = songs.filter(s => s.liked).map(s => s.id)
+        localStorage.setItem('music-liked-songs', JSON.stringify(likedIds))
+    }, [songs])
+
+    // Save music settings to localStorage
+    useEffect(() => {
+        localStorage.setItem('music-settings', JSON.stringify({ volume, shuffle, repeat }))
+    }, [volume, shuffle, repeat])
 
     // Update volume when changed
     useEffect(() => {
@@ -392,6 +432,67 @@ const Music = () => {
             synthesizer.stop()
         }
     }, [])
+
+    // Keyboard shortcuts for media controls
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            // Only handle if not typing in search
+            if (e.target.tagName === 'INPUT') return
+
+            switch (e.key) {
+                case ' ':
+                    e.preventDefault()
+                    togglePlayPause()
+                    break
+                case 'ArrowRight':
+                    if (e.metaKey || e.ctrlKey) {
+                        e.preventDefault()
+                        nextSong()
+                    }
+                    break
+                case 'ArrowLeft':
+                    if (e.metaKey || e.ctrlKey) {
+                        e.preventDefault()
+                        prevSong()
+                    }
+                    break
+                case 'ArrowUp':
+                    if (e.metaKey || e.ctrlKey) {
+                        e.preventDefault()
+                        setVolume(prev => Math.min(100, prev + 10))
+                    }
+                    break
+                case 'ArrowDown':
+                    if (e.metaKey || e.ctrlKey) {
+                        e.preventDefault()
+                        setVolume(prev => Math.max(0, prev - 10))
+                    }
+                    break
+                case 'm':
+                    if (e.metaKey || e.ctrlKey) {
+                        e.preventDefault()
+                        toggleMute()
+                    }
+                    break
+                case 's':
+                    if (e.metaKey || e.ctrlKey) {
+                        e.preventDefault()
+                        setShuffle(prev => !prev)
+                    }
+                    break
+                case 'r':
+                    if (e.metaKey || e.ctrlKey) {
+                        e.preventDefault()
+                        setRepeat(prev => !prev)
+                    }
+                    break
+                default:
+                    break
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [togglePlayPause, nextSong, prevSong, toggleMute])
 
     // 格式化时间
     const formatTime = (seconds) => {

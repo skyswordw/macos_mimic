@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
 import {
     FaInbox, FaStar, FaPaperPlane, FaFile, FaTrash, FaArchive,
@@ -6,95 +6,116 @@ import {
     FaChevronDown, FaCircle, FaPaperclip, FaTag
 } from 'react-icons/fa'
 
+// Load emails from localStorage
+const loadEmails = () => {
+    try {
+        const saved = localStorage.getItem('mail-data')
+        if (saved) return JSON.parse(saved)
+    } catch (e) {
+        console.error('Failed to load emails:', e)
+    }
+    return null
+}
+
+// Default emails data
+const defaultEmails = {
+    inbox: [
+        {
+            id: 1,
+            from: 'Apple',
+            email: 'noreply@apple.com',
+            subject: 'Your Apple ID was used to sign in to iCloud',
+            preview: 'Your Apple ID (user@example.com) was used to sign in to iCloud via a web browser...',
+            body: 'Your Apple ID (user@example.com) was used to sign in to iCloud via a web browser.\n\nDate and Time: December 2, 2024 at 10:30 AM PST\nBrowser: Safari\nOperating System: macOS\n\nIf you recently signed in, you can disregard this email. If you did not sign in, please change your password immediately.',
+            date: '10:30 AM',
+            read: false,
+            starred: false,
+            hasAttachment: false
+        },
+        {
+            id: 2,
+            from: 'GitHub',
+            email: 'notifications@github.com',
+            subject: '[macOS-mimic] New pull request #42',
+            preview: 'A new pull request has been opened by contributor123: "Add dark mode support"...',
+            body: 'A new pull request has been opened by contributor123.\n\nPull Request: #42\nTitle: Add dark mode support\n\nChanges:\n- Added dark mode toggle in settings\n- Updated all components to support dark mode\n- Added system preference detection\n\nReview this pull request: https://github.com/example/macos-mimic/pull/42',
+            date: '9:15 AM',
+            read: true,
+            starred: true,
+            hasAttachment: false
+        },
+        {
+            id: 3,
+            from: 'Sarah Johnson',
+            email: 'sarah.johnson@company.com',
+            subject: 'Project Update - Q4 Review',
+            preview: 'Hi team, I wanted to share the latest updates on our Q4 progress...',
+            body: 'Hi team,\n\nI wanted to share the latest updates on our Q4 progress. We\'ve made significant strides in the following areas:\n\n1. User engagement is up 25%\n2. New feature adoption rate exceeded expectations\n3. Customer satisfaction scores improved by 15%\n\nPlease review the attached report and let me know if you have any questions.\n\nBest regards,\nSarah',
+            date: 'Yesterday',
+            read: true,
+            starred: false,
+            hasAttachment: true
+        },
+        {
+            id: 4,
+            from: 'LinkedIn',
+            email: 'notifications@linkedin.com',
+            subject: 'You have 5 new connection requests',
+            preview: 'John Doe, Jane Smith, and 3 others want to connect with you...',
+            body: 'You have 5 new connection requests:\n\n1. John Doe - Software Engineer at Tech Corp\n2. Jane Smith - Product Manager at StartupXYZ\n3. Mike Wilson - UX Designer at Design Studio\n4. Emily Brown - Data Scientist at AI Labs\n5. Chris Lee - Engineering Manager at BigTech\n\nView and accept these requests on LinkedIn.',
+            date: 'Yesterday',
+            read: false,
+            starred: false,
+            hasAttachment: false
+        },
+        {
+            id: 5,
+            from: 'Newsletter',
+            email: 'weekly@techdigest.com',
+            subject: 'This Week in Tech: AI Breakthroughs and More',
+            preview: 'Your weekly roundup of the biggest tech stories...',
+            body: 'This Week in Tech\n\nTop Stories:\n\n1. Major AI breakthrough announced\n2. New smartphone releases\n3. Cloud computing trends for 2025\n4. Cybersecurity best practices\n5. Startup funding roundup\n\nRead the full newsletter at techdigest.com',
+            date: 'Dec 1',
+            read: true,
+            starred: false,
+            hasAttachment: false
+        }
+    ],
+    starred: [],
+    sent: [
+        {
+            id: 101,
+            from: 'Me',
+            to: 'team@company.com',
+            email: 'me@example.com',
+            subject: 'Re: Project Update - Q4 Review',
+            preview: 'Thanks for the update Sarah! The numbers look great...',
+            body: 'Thanks for the update Sarah! The numbers look great.\n\nI have a few follow-up questions:\n1. What contributed most to the engagement increase?\n2. Are there any areas we should focus on for Q1?\n\nLooking forward to discussing this in our next meeting.\n\nBest,\nMe',
+            date: 'Yesterday',
+            read: true,
+            starred: false,
+            hasAttachment: false
+        }
+    ],
+    drafts: [],
+    trash: []
+}
+
 const Mail = () => {
     const { darkMode, addNotification } = useStore()
     const [selectedFolder, setSelectedFolder] = useState('inbox')
     const [selectedEmail, setSelectedEmail] = useState(null)
     const [showCompose, setShowCompose] = useState(false)
     const [composeData, setComposeData] = useState({ to: '', subject: '', body: '' })
+    const [searchQuery, setSearchQuery] = useState('')
 
-    const [emails, setEmails] = useState({
-        inbox: [
-            {
-                id: 1,
-                from: 'Apple',
-                email: 'noreply@apple.com',
-                subject: 'Your Apple ID was used to sign in to iCloud',
-                preview: 'Your Apple ID (user@example.com) was used to sign in to iCloud via a web browser...',
-                body: 'Your Apple ID (user@example.com) was used to sign in to iCloud via a web browser.\n\nDate and Time: December 2, 2024 at 10:30 AM PST\nBrowser: Safari\nOperating System: macOS\n\nIf you recently signed in, you can disregard this email. If you did not sign in, please change your password immediately.',
-                date: '10:30 AM',
-                read: false,
-                starred: false,
-                hasAttachment: false
-            },
-            {
-                id: 2,
-                from: 'GitHub',
-                email: 'notifications@github.com',
-                subject: '[macOS-mimic] New pull request #42',
-                preview: 'A new pull request has been opened by contributor123: "Add dark mode support"...',
-                body: 'A new pull request has been opened by contributor123.\n\nPull Request: #42\nTitle: Add dark mode support\n\nChanges:\n- Added dark mode toggle in settings\n- Updated all components to support dark mode\n- Added system preference detection\n\nReview this pull request: https://github.com/example/macos-mimic/pull/42',
-                date: '9:15 AM',
-                read: true,
-                starred: true,
-                hasAttachment: false
-            },
-            {
-                id: 3,
-                from: 'Sarah Johnson',
-                email: 'sarah.johnson@company.com',
-                subject: 'Project Update - Q4 Review',
-                preview: 'Hi team, I wanted to share the latest updates on our Q4 progress...',
-                body: 'Hi team,\n\nI wanted to share the latest updates on our Q4 progress. We\'ve made significant strides in the following areas:\n\n1. User engagement is up 25%\n2. New feature adoption rate exceeded expectations\n3. Customer satisfaction scores improved by 15%\n\nPlease review the attached report and let me know if you have any questions.\n\nBest regards,\nSarah',
-                date: 'Yesterday',
-                read: true,
-                starred: false,
-                hasAttachment: true
-            },
-            {
-                id: 4,
-                from: 'LinkedIn',
-                email: 'notifications@linkedin.com',
-                subject: 'You have 5 new connection requests',
-                preview: 'John Doe, Jane Smith, and 3 others want to connect with you...',
-                body: 'You have 5 new connection requests:\n\n1. John Doe - Software Engineer at Tech Corp\n2. Jane Smith - Product Manager at StartupXYZ\n3. Mike Wilson - UX Designer at Design Studio\n4. Emily Brown - Data Scientist at AI Labs\n5. Chris Lee - Engineering Manager at BigTech\n\nView and accept these requests on LinkedIn.',
-                date: 'Yesterday',
-                read: false,
-                starred: false,
-                hasAttachment: false
-            },
-            {
-                id: 5,
-                from: 'Newsletter',
-                email: 'weekly@techdigest.com',
-                subject: 'This Week in Tech: AI Breakthroughs and More',
-                preview: 'Your weekly roundup of the biggest tech stories...',
-                body: 'This Week in Tech\n\nTop Stories:\n\n1. Major AI breakthrough announced\n2. New smartphone releases\n3. Cloud computing trends for 2025\n4. Cybersecurity best practices\n5. Startup funding roundup\n\nRead the full newsletter at techdigest.com',
-                date: 'Dec 1',
-                read: true,
-                starred: false,
-                hasAttachment: false
-            }
-        ],
-        starred: [],
-        sent: [
-            {
-                id: 101,
-                from: 'Me',
-                to: 'team@company.com',
-                email: 'me@example.com',
-                subject: 'Re: Project Update - Q4 Review',
-                preview: 'Thanks for the update Sarah! The numbers look great...',
-                body: 'Thanks for the update Sarah! The numbers look great.\n\nI have a few follow-up questions:\n1. What contributed most to the engagement increase?\n2. Are there any areas we should focus on for Q1?\n\nLooking forward to discussing this in our next meeting.\n\nBest,\nMe',
-                date: 'Yesterday',
-                read: true,
-                starred: false,
-                hasAttachment: false
-            }
-        ],
-        drafts: [],
-        trash: []
-    })
+    // Load saved emails or use defaults
+    const [emails, setEmails] = useState(() => loadEmails() || defaultEmails)
+
+    // Save emails to localStorage when changed
+    useEffect(() => {
+        localStorage.setItem('mail-data', JSON.stringify(emails))
+    }, [emails])
 
     const folders = [
         { id: 'inbox', name: 'Inbox', icon: FaInbox, count: emails.inbox.filter(e => !e.read).length },
@@ -106,10 +127,25 @@ const Mail = () => {
     ]
 
     const getCurrentEmails = () => {
+        let emailList = []
         if (selectedFolder === 'starred') {
-            return emails.inbox.filter(e => e.starred)
+            emailList = emails.inbox.filter(e => e.starred)
+        } else {
+            emailList = emails[selectedFolder] || []
         }
-        return emails[selectedFolder] || []
+
+        // Apply search filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase()
+            emailList = emailList.filter(e =>
+                e.from.toLowerCase().includes(query) ||
+                e.subject.toLowerCase().includes(query) ||
+                e.body.toLowerCase().includes(query) ||
+                e.email.toLowerCase().includes(query)
+            )
+        }
+
+        return emailList
     }
 
     const toggleStar = (emailId) => {
@@ -236,7 +272,9 @@ const Mail = () => {
                         <input
                             type="text"
                             placeholder="Search mail..."
-                            className={`w-full pl-10 pr-4 py-2 rounded-lg focus:outline-none ${
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className={`w-full pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                 darkMode
                                     ? 'bg-gray-700 text-white placeholder-gray-500'
                                     : 'bg-gray-100 text-gray-900 placeholder-gray-500'
