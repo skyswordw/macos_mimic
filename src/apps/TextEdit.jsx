@@ -1,18 +1,31 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useStore } from '../store/useStore'
 import {
     FaBold, FaItalic, FaUnderline, FaStrikethrough,
     FaAlignLeft, FaAlignCenter, FaAlignRight, FaAlignJustify,
     FaListUl, FaListOl, FaUndo, FaRedo, FaPrint, FaFont,
-    FaPlus, FaFileAlt, FaSave, FaFolderOpen
+    FaPlus, FaFileAlt, FaSave, FaFolderOpen, FaLink, FaImage,
+    FaIndent, FaOutdent, FaQuoteRight, FaCode, FaHighlighter
 } from 'react-icons/fa'
 
+// Load documents from localStorage
+const loadDocuments = () => {
+    try {
+        const saved = localStorage.getItem('textedit-documents')
+        if (saved) {
+            const docs = JSON.parse(saved)
+            if (docs.length > 0) return docs
+        }
+    } catch (e) {
+        console.error('Failed to load TextEdit documents:', e)
+    }
+    return [{ id: 1, name: 'Untitled', content: '', active: true }]
+}
+
 const TextEdit = () => {
-    const { darkMode } = useStore()
+    const { darkMode, addNotification } = useStore()
     const editorRef = useRef(null)
-    const [documents, setDocuments] = useState([
-        { id: 1, name: 'Untitled', content: '', active: true }
-    ])
+    const [documents, setDocuments] = useState(loadDocuments)
     const [activeDocId, setActiveDocId] = useState(1)
     const [fontSize, setFontSize] = useState(16)
     const [fontFamily, setFontFamily] = useState('system-ui')
@@ -34,10 +47,75 @@ const TextEdit = () => {
 
     const fontSizes = [9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72]
 
+    // Save documents to localStorage
+    useEffect(() => {
+        localStorage.setItem('textedit-documents', JSON.stringify(documents))
+    }, [documents])
+
+    // Initialize activeDocId from loaded documents
+    useEffect(() => {
+        const loaded = loadDocuments()
+        if (loaded.length > 0) {
+            setActiveDocId(loaded[0].id)
+        }
+    }, [])
+
     // Execute formatting command
-    const execCommand = (command, value = null) => {
+    const execCommand = useCallback((command, value = null) => {
         document.execCommand(command, false, value)
         editorRef.current?.focus()
+    }, [])
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (!editorRef.current?.contains(document.activeElement) &&
+                document.activeElement !== editorRef.current) return
+
+            if (e.metaKey || e.ctrlKey) {
+                switch (e.key.toLowerCase()) {
+                    case 'b':
+                        e.preventDefault()
+                        execCommand('bold')
+                        break
+                    case 'i':
+                        e.preventDefault()
+                        execCommand('italic')
+                        break
+                    case 'u':
+                        e.preventDefault()
+                        execCommand('underline')
+                        break
+                    case 's':
+                        e.preventDefault()
+                        // Save notification
+                        addNotification({
+                            title: 'TextEdit',
+                            message: 'Document saved',
+                            app: 'TextEdit'
+                        })
+                        break
+                    default:
+                        break
+                }
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [execCommand, addNotification])
+
+    // Insert link
+    const insertLink = () => {
+        const url = prompt('Enter URL:')
+        if (url) {
+            execCommand('createLink', url)
+        }
+    }
+
+    // Insert horizontal rule
+    const insertHR = () => {
+        execCommand('insertHorizontalRule')
     }
 
     // Update word and character count
@@ -245,6 +323,15 @@ const TextEdit = () => {
                 {/* Lists */}
                 <ToolbarButton icon={FaListUl} onClick={() => execCommand('insertUnorderedList')} title="Bullet List" />
                 <ToolbarButton icon={FaListOl} onClick={() => execCommand('insertOrderedList')} title="Numbered List" />
+                <ToolbarButton icon={FaIndent} onClick={() => execCommand('indent')} title="Indent" />
+                <ToolbarButton icon={FaOutdent} onClick={() => execCommand('outdent')} title="Outdent" />
+
+                <Separator />
+
+                {/* Insert */}
+                <ToolbarButton icon={FaLink} onClick={insertLink} title="Insert Link" />
+                <ToolbarButton icon={FaQuoteRight} onClick={() => execCommand('formatBlock', 'blockquote')} title="Quote" />
+                <ToolbarButton icon={FaCode} onClick={() => execCommand('formatBlock', 'pre')} title="Code Block" />
 
                 <Separator />
 

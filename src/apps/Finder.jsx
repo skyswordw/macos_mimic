@@ -44,7 +44,29 @@ const Finder = () => {
     const [showPreviewPanel, setShowPreviewPanel] = useState(false)
 
     const renameInputRef = useRef(null)
-    const { moveToTrash } = useStore()
+    const { moveToTrash, openWindow } = useStore()
+
+    // 根据文件类型获取应用ID
+    const getAppForFileType = (type) => {
+        switch (type) {
+            case 'image':
+                return { id: 'preview', title: 'Preview' }
+            case 'text':
+            case 'document':
+                return { id: 'textedit', title: 'TextEdit' }
+            case 'pdf':
+                return { id: 'preview', title: 'Preview' }
+            case 'audio':
+            case 'music':
+                return { id: 'music', title: 'Music' }
+            case 'video':
+                return { id: 'preview', title: 'Preview' }
+            case 'code':
+                return { id: 'vscode', title: 'VS Code' }
+            default:
+                return null // Use Quick Look for unknown types
+        }
+    }
 
     // 获取当前目录的文件
     const currentFiles = fileSystem[currentPath] || []
@@ -227,11 +249,18 @@ const Finder = () => {
             }
             navigateTo(newPath)
         } else {
-            // 打开文件 - 使用 Quick Look 预览
-            const fileIndex = filteredFiles.findIndex(f => f.id === item.id)
-            if (fileIndex !== -1) {
-                setQuickLookIndex(fileIndex)
-                setQuickLookOpen(true)
+            // 尝试在对应的应用中打开文件
+            const app = getAppForFileType(item.type)
+            if (app) {
+                // 打开对应的应用
+                openWindow(app.id, app.title, app.id)
+            } else {
+                // 未知文件类型 - 使用 Quick Look 预览
+                const fileIndex = filteredFiles.findIndex(f => f.id === item.id)
+                if (fileIndex !== -1) {
+                    setQuickLookIndex(fileIndex)
+                    setQuickLookOpen(true)
+                }
             }
         }
     }

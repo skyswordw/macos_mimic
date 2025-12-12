@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
-import { FaSearch, FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaCode, FaMusic, FaComments, FaImage, FaCalendarAlt, FaCloudSun, FaEnvelope, FaTasks, FaChartArea, FaFileImage, FaGlobe, FaHistory, FaEquals, FaClock, FaFile, FaRocket, FaFileAlt } from 'react-icons/fa'
+import { FaSearch, FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaCode, FaMusic, FaComments, FaImage, FaCalendarAlt, FaCloudSun, FaEnvelope, FaTasks, FaChartArea, FaFileImage, FaGlobe, FaHistory, FaEquals, FaClock, FaFile, FaRocket, FaFileAlt, FaCheckCircle, FaRegCircle, FaFilePdf, FaFileAudio, FaFileVideo, FaFolder, FaArchive } from 'react-icons/fa'
 
 const apps = [
     { id: 'finder', title: 'Finder', icon: FaFolderOpen, color: 'text-blue-500', category: 'Applications' },
@@ -24,12 +24,41 @@ const apps = [
     { id: 'launchpad', title: 'Launchpad', icon: FaRocket, color: 'text-gray-500', category: 'Applications' },
 ]
 
-// 模拟最近文件
-const recentFiles = [
-    { id: 'recent-1', name: 'presentation.pdf', type: 'PDF Document', icon: FaFile, color: 'text-red-500' },
-    { id: 'recent-2', name: 'project-notes.txt', type: 'Text Document', icon: FaFile, color: 'text-gray-500' },
-    { id: 'recent-3', name: 'screenshot.png', type: 'Image', icon: FaImage, color: 'text-pink-500' },
+// 模拟文件系统文件
+const systemFiles = [
+    { id: 'file-1', name: 'presentation.pdf', path: '/Documents', type: 'PDF Document', icon: FaFilePdf, color: 'text-red-500' },
+    { id: 'file-2', name: 'project-notes.txt', path: '/Documents', type: 'Text Document', icon: FaFileAlt, color: 'text-gray-500' },
+    { id: 'file-3', name: 'screenshot.png', path: '/Desktop', type: 'Image', icon: FaImage, color: 'text-pink-500' },
+    { id: 'file-4', name: 'vacation-photos', path: '/Pictures', type: 'Folder', icon: FaFolder, color: 'text-blue-500' },
+    { id: 'file-5', name: 'song.mp3', path: '/Music', type: 'Audio', icon: FaFileAudio, color: 'text-purple-500' },
+    { id: 'file-6', name: 'movie.mp4', path: '/Movies', type: 'Video', icon: FaFileVideo, color: 'text-red-500' },
+    { id: 'file-7', name: 'archive.zip', path: '/Downloads', type: 'Archive', icon: FaArchive, color: 'text-yellow-500' },
+    { id: 'file-8', name: 'resume.pdf', path: '/Documents', type: 'PDF Document', icon: FaFilePdf, color: 'text-red-500' },
+    { id: 'file-9', name: 'budget.xlsx', path: '/Documents', type: 'Spreadsheet', icon: FaFileAlt, color: 'text-green-500' },
+    { id: 'file-10', name: 'wallpaper.jpg', path: '/Pictures', type: 'Image', icon: FaImage, color: 'text-pink-500' },
 ]
+
+// Load notes from localStorage
+const loadNotes = () => {
+    try {
+        const saved = localStorage.getItem('notes-data')
+        if (saved) return JSON.parse(saved)
+    } catch (e) {
+        console.error('Failed to load notes:', e)
+    }
+    return []
+}
+
+// Load reminders from localStorage
+const loadReminders = () => {
+    try {
+        const saved = localStorage.getItem('reminders-data')
+        if (saved) return JSON.parse(saved)
+    } catch (e) {
+        console.error('Failed to load reminders:', e)
+    }
+    return []
+}
 
 const Spotlight = () => {
     const { isSpotlightOpen, toggleSpotlight, openWindow, darkMode, recentApps } = useStore()
@@ -56,6 +85,10 @@ const Spotlight = () => {
     }
 
     const mathResult = evaluateMath(search)
+
+    // Load notes and reminders dynamically
+    const notes = useMemo(() => loadNotes(), [isSpotlightOpen])
+    const reminders = useMemo(() => loadReminders(), [isSpotlightOpen])
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -85,7 +118,23 @@ const Spotlight = () => {
         : []
 
     const filteredFiles = search
-        ? recentFiles.filter(file => file.name.toLowerCase().includes(search.toLowerCase()))
+        ? systemFiles.filter(file => file.name.toLowerCase().includes(search.toLowerCase()))
+        : []
+
+    // Search notes content
+    const filteredNotes = search
+        ? notes.filter(note =>
+            note.title?.toLowerCase().includes(search.toLowerCase()) ||
+            note.content?.toLowerCase().includes(search.toLowerCase())
+        ).slice(0, 3)
+        : []
+
+    // Search reminders
+    const filteredReminders = search
+        ? reminders.filter(reminder =>
+            reminder.title?.toLowerCase().includes(search.toLowerCase()) ||
+            reminder.notes?.toLowerCase().includes(search.toLowerCase())
+        ).slice(0, 3)
         : []
 
     // 构建所有结果列表
@@ -122,9 +171,33 @@ const Spotlight = () => {
             type: 'file',
             id: file.id,
             title: file.name,
-            subtitle: file.type,
+            subtitle: `${file.type} — ${file.path}`,
             icon: file.icon,
             color: file.color
+        })
+    })
+
+    // 添加笔记结果
+    filteredNotes.forEach(note => {
+        allResults.push({
+            type: 'note',
+            id: `note-${note.id}`,
+            title: note.title || 'Untitled Note',
+            subtitle: note.content?.substring(0, 50) + (note.content?.length > 50 ? '...' : '') || 'Notes',
+            icon: FaRegStickyNote,
+            color: 'text-yellow-500'
+        })
+    })
+
+    // 添加提醒结果
+    filteredReminders.forEach(reminder => {
+        allResults.push({
+            type: 'reminder',
+            id: `reminder-${reminder.id}`,
+            title: reminder.title,
+            subtitle: reminder.completed ? 'Completed' : (reminder.dueDate || 'Reminders'),
+            icon: reminder.completed ? FaCheckCircle : FaRegCircle,
+            color: reminder.completed ? 'text-green-500' : 'text-orange-500'
         })
     })
 
@@ -172,6 +245,15 @@ const Spotlight = () => {
         } else if (result.type === 'calculator') {
             // 复制结果到剪贴板
             navigator.clipboard?.writeText(mathResult.toString())
+        } else if (result.type === 'note') {
+            // Open Notes app
+            openWindow('notes', 'Notes', 'notes')
+        } else if (result.type === 'reminder') {
+            // Open Reminders app
+            openWindow('reminders', 'Reminders', 'reminders')
+        } else if (result.type === 'file') {
+            // Open Finder
+            openWindow('finder', 'Finder', 'finder')
         }
         toggleSpotlight()
     }
@@ -342,12 +424,13 @@ const Spotlight = () => {
                                                                     ? 'bg-blue-500 text-white'
                                                                     : darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'
                                                             }`}
+                                                            onClick={() => handleOpen({ type: 'file', id: file.id })}
                                                         >
                                                             <file.icon className={`text-xl ${selectedIndex === resultIndex ? 'text-white' : file.color}`} />
-                                                            <div>
-                                                                <span className="text-lg">{file.name}</span>
+                                                            <div className="flex-1 min-w-0">
+                                                                <span className="text-base">{file.name}</span>
                                                                 <span className={`text-xs ml-2 ${selectedIndex === resultIndex ? 'text-white/70' : darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                                                    {file.type}
+                                                                    {file.path}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -356,8 +439,76 @@ const Spotlight = () => {
                                             </>
                                         )}
 
+                                        {filteredNotes.length > 0 && (
+                                            <>
+                                                <div className={`px-4 py-1 text-xs font-bold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                    Notes
+                                                </div>
+                                                {filteredNotes.map((note, i) => {
+                                                    const resultIndex = (mathResult !== null ? 1 : 0) + filteredApps.length + filteredFiles.length + i
+                                                    return (
+                                                        <div
+                                                            key={note.id}
+                                                            className={`px-4 py-2 flex items-center gap-3 cursor-pointer transition-colors ${
+                                                                selectedIndex === resultIndex
+                                                                    ? 'bg-blue-500 text-white'
+                                                                    : darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'
+                                                            }`}
+                                                            onClick={() => handleOpen({ type: 'note' })}
+                                                        >
+                                                            <FaRegStickyNote className={`text-xl ${selectedIndex === resultIndex ? 'text-white' : 'text-yellow-500'}`} />
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="text-base truncate">{note.title || 'Untitled Note'}</div>
+                                                                <div className={`text-xs truncate ${selectedIndex === resultIndex ? 'text-white/70' : darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                                    {note.content?.substring(0, 40) || 'No content'}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </>
+                                        )}
+
+                                        {filteredReminders.length > 0 && (
+                                            <>
+                                                <div className={`px-4 py-1 text-xs font-bold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                    Reminders
+                                                </div>
+                                                {filteredReminders.map((reminder, i) => {
+                                                    const resultIndex = (mathResult !== null ? 1 : 0) + filteredApps.length + filteredFiles.length + filteredNotes.length + i
+                                                    const ReminderIcon = reminder.completed ? FaCheckCircle : FaRegCircle
+                                                    return (
+                                                        <div
+                                                            key={reminder.id}
+                                                            className={`px-4 py-2 flex items-center gap-3 cursor-pointer transition-colors ${
+                                                                selectedIndex === resultIndex
+                                                                    ? 'bg-blue-500 text-white'
+                                                                    : darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'
+                                                            }`}
+                                                            onClick={() => handleOpen({ type: 'reminder' })}
+                                                        >
+                                                            <ReminderIcon className={`text-xl ${
+                                                                selectedIndex === resultIndex ? 'text-white' :
+                                                                reminder.completed ? 'text-green-500' : 'text-orange-500'
+                                                            }`} />
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className={`text-base truncate ${reminder.completed ? 'line-through opacity-60' : ''}`}>
+                                                                    {reminder.title}
+                                                                </div>
+                                                                {reminder.dueDate && (
+                                                                    <div className={`text-xs ${selectedIndex === resultIndex ? 'text-white/70' : darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                                        Due: {reminder.dueDate}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </>
+                                        )}
+
                                         {/* Web搜索选项 */}
-                                        {filteredApps.length === 0 && filteredFiles.length === 0 && mathResult === null && (
+                                        {filteredApps.length === 0 && filteredFiles.length === 0 && filteredNotes.length === 0 && filteredReminders.length === 0 && mathResult === null && (
                                             <div
                                                 className={`px-4 py-2 flex items-center gap-3 cursor-pointer transition-colors ${
                                                     selectedIndex === 0
