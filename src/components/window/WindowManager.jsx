@@ -19,6 +19,7 @@ import Mail from '../../apps/Mail'
 import Reminders from '../../apps/Reminders'
 import ActivityMonitor from '../../apps/ActivityMonitor'
 import Preview from '../../apps/Preview'
+import TextEdit from '../../apps/TextEdit'
 
 const WindowManager = () => {
     const { windows, currentDesktop } = useStore()
@@ -42,6 +43,7 @@ const WindowManager = () => {
             case 'reminders': return <Reminders />
             case 'activity-monitor': return <ActivityMonitor />
             case 'preview': return <Preview />
+            case 'textedit': return <TextEdit />
             default: return <div className="p-4">App not implemented yet</div>
         }
     }

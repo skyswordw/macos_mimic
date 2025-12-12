@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
-import { FaSearch, FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaCode, FaMusic, FaComments, FaImage, FaCalendarAlt, FaCloudSun, FaEnvelope, FaTasks, FaChartArea, FaFileImage, FaGlobe, FaHistory, FaEquals, FaClock, FaFile, FaRocket } from 'react-icons/fa'
+import { FaSearch, FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaCode, FaMusic, FaComments, FaImage, FaCalendarAlt, FaCloudSun, FaEnvelope, FaTasks, FaChartArea, FaFileImage, FaGlobe, FaHistory, FaEquals, FaClock, FaFile, FaRocket, FaFileAlt } from 'react-icons/fa'
 
 const apps = [
     { id: 'finder', title: 'Finder', icon: FaFolderOpen, color: 'text-blue-500', category: 'Applications' },
@@ -10,6 +10,7 @@ const apps = [
     { id: 'messages', title: 'Messages', icon: FaComments, color: 'text-green-500', category: 'Applications' },
     { id: 'music', title: 'Music', icon: FaMusic, color: 'text-red-500', category: 'Applications' },
     { id: 'photos', title: 'Photos', icon: FaImage, color: 'text-pink-500', category: 'Applications' },
+    { id: 'textedit', title: 'TextEdit', icon: FaFileAlt, color: 'text-gray-600', category: 'Applications' },
     { id: 'preview', title: 'Preview', icon: FaFileImage, color: 'text-orange-400', category: 'Applications' },
     { id: 'calendar', title: 'Calendar', icon: FaCalendarAlt, color: 'text-red-500', category: 'Applications' },
     { id: 'reminders', title: 'Reminders', icon: FaTasks, color: 'text-orange-500', category: 'Applications' },

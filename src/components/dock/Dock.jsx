@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { useStore } from '../../store/useStore'
-import { FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaTrash, FaCode, FaRocket, FaMusic, FaComments, FaImage, FaCalendarAlt, FaCloudSun, FaEnvelope, FaTasks, FaChartArea, FaFileImage } from 'react-icons/fa'
+import { FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaTrash, FaCode, FaRocket, FaMusic, FaComments, FaImage, FaCalendarAlt, FaCloudSun, FaEnvelope, FaTasks, FaChartArea, FaFileImage, FaFileAlt } from 'react-icons/fa'
 
 const apps = [
     { id: 'launchpad', title: 'Launchpad', icon: FaRocket, color: 'text-gray-500' },
@@ -11,6 +11,7 @@ const apps = [
     { id: 'messages', title: 'Messages', icon: FaComments, color: 'text-green-500' },
     { id: 'music', title: 'Music', icon: FaMusic, color: 'text-red-500' },
     { id: 'photos', title: 'Photos', icon: FaImage, color: 'text-pink-500' },
+    { id: 'textedit', title: 'TextEdit', icon: FaFileAlt, color: 'text-gray-600' },
     { id: 'preview', title: 'Preview', icon: FaFileImage, color: 'text-orange-400' },
     { id: 'calendar', title: 'Calendar', icon: FaCalendarAlt, color: 'text-red-500' },
     { id: 'reminders', title: 'Reminders', icon: FaTasks, color: 'text-orange-500' },
