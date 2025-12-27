@@ -28,6 +28,11 @@ export const useStore = create(
     isNotificationCenterOpen: false,
     isMissionControlOpen: false,
     showWidgets: false,
+    isLockScreenOpen: false,
+    isPowerMenuOpen: false,
+    isScreenSaverActive: false,
+    isSiriOpen: false,
+    screenSaverTimeout: persistedSettings.screenSaverTimeout ?? 5, // minutes
     brightness: persistedSettings.brightness ?? 100,
     darkMode: persistedSettings.darkMode ?? false,
     soundEnabled: persistedSettings.soundEnabled ?? true,
@@ -91,6 +96,40 @@ export const useStore = create(
         }
         return { showWidgets: !state.showWidgets }
     }),
+
+    // Lock Screen actions
+    toggleLockScreen: () => set((state) => {
+        if (state.soundEnabled && !state.isLockScreenOpen) {
+            soundEffects.click()
+        }
+        return { isLockScreenOpen: !state.isLockScreenOpen, isScreenSaverActive: false }
+    }),
+    lockScreen: () => set({ isLockScreenOpen: true, isScreenSaverActive: false }),
+    unlockScreen: () => set({ isLockScreenOpen: false }),
+
+    // Power Menu actions
+    togglePowerMenu: () => set((state) => {
+        if (state.soundEnabled && !state.isPowerMenuOpen) {
+            soundEffects.click()
+        }
+        return { isPowerMenuOpen: !state.isPowerMenuOpen }
+    }),
+    closePowerMenu: () => set({ isPowerMenuOpen: false }),
+
+    // Screen Saver actions
+    activateScreenSaver: () => set({ isScreenSaverActive: true }),
+    deactivateScreenSaver: () => set({ isScreenSaverActive: false }),
+    setScreenSaverTimeout: (minutes) => set({ screenSaverTimeout: minutes }),
+
+    // Siri actions
+    toggleSiri: () => set((state) => {
+        if (state.soundEnabled && !state.isSiriOpen) {
+            soundEffects.click()
+        }
+        return { isSiriOpen: !state.isSiriOpen }
+    }),
+    closeSiri: () => set({ isSiriOpen: false }),
+
     setBrightness: (val) => set({ brightness: val }),
     setWallpaper: (url) => set({ wallpaper: url }),
     toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
@@ -328,6 +367,7 @@ export const useStore = create(
                 notifications: state.notifications,
                 recentApps: state.recentApps,
                 hotCorners: state.hotCorners,
+                screenSaverTimeout: state.screenSaverTimeout,
                 // Save window positions and sizes (but not open/minimized state)
                 windows: state.windows.map(w => ({
                     id: w.id,

@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { FaMicrophone, FaTimes, FaVolumeUp, FaCloudSun, FaCalendarAlt, FaMusic, FaClock, FaCalculator, FaSearch } from 'react-icons/fa'
 
-const Siri = ({ isOpen, onClose }) => {
-    const { darkMode, openWindow, addNotification, toggleDarkMode } = useStore()
+const Siri = ({ onClose }) => {
+    const { darkMode, openWindow, toggleDarkMode } = useStore()
     const [isListening, setIsListening] = useState(false)
     const [query, setQuery] = useState('')
     const [response, setResponse] = useState(null)
@@ -12,12 +12,10 @@ const Siri = ({ isOpen, onClose }) => {
     const inputRef = useRef(null)
 
     useEffect(() => {
-        if (isOpen) {
-            setQuery('')
-            setResponse(null)
-            setTimeout(() => inputRef.current?.focus(), 100)
-        }
-    }, [isOpen])
+        setQuery('')
+        setResponse(null)
+        setTimeout(() => inputRef.current?.focus(), 100)
+    }, [])
 
     const suggestions = [
         { text: "What's the weather?", icon: FaCloudSun },
@@ -101,8 +99,6 @@ const Siri = ({ isOpen, onClose }) => {
         setQuery(suggestion.text)
         processQuery(suggestion.text)
     }
-
-    if (!isOpen) return null
 
     return (
         <AnimatePresence>

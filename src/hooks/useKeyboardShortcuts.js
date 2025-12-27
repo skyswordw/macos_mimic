@@ -7,6 +7,9 @@ export const useKeyboardShortcuts = () => {
         toggleLaunchpad,
         toggleMissionControl,
         toggleNotificationCenter,
+        toggleSiri,
+        lockScreen,
+        togglePowerMenu,
         activeWindowId,
         closeWindow,
         minimizeWindow,
@@ -14,6 +17,7 @@ export const useKeyboardShortcuts = () => {
         openWindow,
         windows,
         focusWindow,
+        toggleDarkMode,
     } = useStore()
 
     useEffect(() => {
@@ -25,6 +29,34 @@ export const useKeyboardShortcuts = () => {
             if (modKey && (e.key === 'k' || e.key === ' ')) {
                 e.preventDefault()
                 toggleSpotlight()
+                return
+            }
+
+            // Siri: Cmd+S (when holding)
+            if (modKey && e.key === 's' && !e.shiftKey && !isInputFocused()) {
+                e.preventDefault()
+                toggleSiri()
+                return
+            }
+
+            // Lock Screen: Ctrl+Cmd+Q (macOS standard)
+            if (e.ctrlKey && modKey && e.key === 'q') {
+                e.preventDefault()
+                lockScreen()
+                return
+            }
+
+            // Lock Screen alternative: Cmd+L (when no input focused)
+            if (modKey && e.key === 'l' && !isInputFocused()) {
+                e.preventDefault()
+                lockScreen()
+                return
+            }
+
+            // Power Menu: Ctrl+Eject or Power button simulation (Cmd+Shift+P)
+            if (modKey && e.shiftKey && e.key === 'p') {
+                e.preventDefault()
+                togglePowerMenu()
                 return
             }
 
@@ -49,6 +81,13 @@ export const useKeyboardShortcuts = () => {
                 return
             }
 
+            // Toggle Dark Mode: Cmd+Shift+D
+            if (modKey && e.shiftKey && e.key === 'd') {
+                e.preventDefault()
+                toggleDarkMode()
+                return
+            }
+
             // Close window: Cmd+W
             if (modKey && e.key === 'w' && activeWindowId) {
                 e.preventDefault()
@@ -56,8 +95,16 @@ export const useKeyboardShortcuts = () => {
                 return
             }
 
+            // Quit app (close all windows of active app): Cmd+Q
+            if (modKey && e.key === 'q' && !e.ctrlKey && activeWindowId) {
+                e.preventDefault()
+                // Close the active window (simplified quit)
+                closeWindow(activeWindowId)
+                return
+            }
+
             // Minimize window: Cmd+M
-            if (modKey && e.key === 'm' && activeWindowId) {
+            if (modKey && e.key === 'm' && activeWindowId && !e.shiftKey) {
                 e.preventDefault()
                 minimizeWindow(activeWindowId)
                 return
@@ -72,7 +119,7 @@ export const useKeyboardShortcuts = () => {
                 return
             }
 
-            // Quick app launchers
+            // Quick app launchers: Cmd+Shift+[Key]
             if (modKey && e.shiftKey) {
                 switch (e.key.toLowerCase()) {
                     case 'f':
@@ -95,7 +142,7 @@ export const useKeyboardShortcuts = () => {
                         e.preventDefault()
                         openWindow('notes', 'Notes', 'notes')
                         break
-                    case 'p':
+                    case 'o':
                         e.preventDefault()
                         openWindow('photos', 'Photos', 'photos')
                         break
@@ -118,6 +165,18 @@ export const useKeyboardShortcuts = () => {
                     case 'u':
                         e.preventDefault()
                         openWindow('music', 'Music', 'music')
+                        break
+                    case 'a':
+                        e.preventDefault()
+                        openWindow('appstore', 'App Store', 'appstore')
+                        break
+                    case 'i':
+                        e.preventDefault()
+                        openWindow('settings', 'Settings', 'settings')
+                        break
+                    case 'e':
+                        e.preventDefault()
+                        openWindow('textedit', 'TextEdit', 'textedit')
                         break
                 }
                 return
@@ -143,6 +202,18 @@ export const useKeyboardShortcuts = () => {
                 }
                 return
             }
+
+            // Screenshot: Cmd+Shift+3 or Cmd+Shift+4 (trigger screenshot mode)
+            if (modKey && e.shiftKey && (e.key === '3' || e.key === '4')) {
+                e.preventDefault()
+                // Screenshot functionality is handled by Screenshot component
+                useStore.getState().addNotification({
+                    title: 'Screenshot',
+                    message: 'Screenshot taken!',
+                    app: 'System'
+                })
+                return
+            }
         }
 
         const isInputFocused = () => {
@@ -161,6 +232,9 @@ export const useKeyboardShortcuts = () => {
         toggleLaunchpad,
         toggleMissionControl,
         toggleNotificationCenter,
+        toggleSiri,
+        lockScreen,
+        togglePowerMenu,
         activeWindowId,
         closeWindow,
         minimizeWindow,
@@ -168,6 +242,7 @@ export const useKeyboardShortcuts = () => {
         openWindow,
         windows,
         focusWindow,
+        toggleDarkMode,
     ])
 }
 

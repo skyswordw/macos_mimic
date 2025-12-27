@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef, useCallback } from 'react'
 import MenuBar from './MenuBar'
 import Dock from '../dock/Dock'
 import WindowManager from '../window/WindowManager'
@@ -16,12 +16,91 @@ import HotCorners from '../system/HotCorners'
 import Widgets from '../system/Widgets'
 import AppSwitcher from '../system/AppSwitcher'
 import DesktopIcon from './DesktopIcon'
+import LockScreen from '../system/LockScreen'
+import PowerMenu from '../system/PowerMenu'
+import ScreenSaver from '../system/ScreenSaver'
+import Siri from '../system/Siri'
 
 const Desktop = () => {
-    const { wallpaper, desktopIcons, darkMode } = useStore()
+    const {
+        wallpaper, desktopIcons, darkMode,
+        isLockScreenOpen, unlockScreen,
+        isPowerMenuOpen, closePowerMenu, lockScreen, setLogin,
+        isScreenSaverActive, deactivateScreenSaver,
+        isSiriOpen, closeSiri,
+        screenSaverTimeout
+    } = useStore()
+
+    const lastActivityRef = useRef(Date.now())
+    const screenSaverTimerRef = useRef(null)
 
     // 注册全局键盘快捷键
     useKeyboardShortcuts()
+
+    // Handle power menu actions
+    const handlePowerAction = useCallback((action) => {
+        switch (action) {
+            case 'lock':
+                lockScreen()
+                break
+            case 'sleep':
+                // Show screensaver as "sleep" mode
+                useStore.getState().activateScreenSaver()
+                break
+            case 'restart':
+            case 'shutdown':
+                // Show boot sequence by logging out
+                setLogin(false)
+                break
+            case 'logout':
+                setLogin(false)
+                break
+            default:
+                break
+        }
+    }, [lockScreen, setLogin])
+
+    // Screen saver idle detection
+    useEffect(() => {
+        const resetTimer = () => {
+            lastActivityRef.current = Date.now()
+            if (isScreenSaverActive) {
+                deactivateScreenSaver()
+            }
+        }
+
+        const checkIdle = () => {
+            const idleTime = (Date.now() - lastActivityRef.current) / 1000 / 60 // in minutes
+            if (idleTime >= screenSaverTimeout && !isScreenSaverActive && !isLockScreenOpen) {
+                useStore.getState().activateScreenSaver()
+            }
+        }
+
+        // Add activity listeners
+        window.addEventListener('mousemove', resetTimer)
+        window.addEventListener('keydown', resetTimer)
+        window.addEventListener('mousedown', resetTimer)
+        window.addEventListener('touchstart', resetTimer)
+
+        // Check for idle every 30 seconds
+        screenSaverTimerRef.current = setInterval(checkIdle, 30000)
+
+        return () => {
+            window.removeEventListener('mousemove', resetTimer)
+            window.removeEventListener('keydown', resetTimer)
+            window.removeEventListener('mousedown', resetTimer)
+            window.removeEventListener('touchstart', resetTimer)
+            if (screenSaverTimerRef.current) {
+                clearInterval(screenSaverTimerRef.current)
+            }
+        }
+    }, [screenSaverTimeout, isScreenSaverActive, isLockScreenOpen, deactivateScreenSaver])
+
+    // Handle screen saver click to show lock screen
+    const handleScreenSaverDismiss = useCallback(() => {
+        deactivateScreenSaver()
+        lockScreen()
+    }, [deactivateScreenSaver, lockScreen])
 
     return (
         <div
@@ -50,6 +129,26 @@ const Desktop = () => {
             <ContextMenu />
             <Dock />
             <AppSwitcher />
+
+            {/* Siri */}
+            {isSiriOpen && <Siri onClose={closeSiri} />}
+
+            {/* Power Menu */}
+            <PowerMenu
+                isOpen={isPowerMenuOpen}
+                onClose={closePowerMenu}
+                onAction={handlePowerAction}
+            />
+
+            {/* Screen Saver */}
+            {isScreenSaverActive && (
+                <ScreenSaver onDismiss={handleScreenSaverDismiss} />
+            )}
+
+            {/* Lock Screen */}
+            {isLockScreenOpen && (
+                <LockScreen onUnlock={unlockScreen} />
+            )}
         </div>
     )
 }

@@ -1,26 +1,62 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
-import { FaSearch, FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaTrash, FaCode, FaMusic, FaComments, FaImage, FaCalendarAlt, FaCloudSun, FaEnvelope, FaTasks, FaChartArea, FaFileImage, FaFileAlt } from 'react-icons/fa'
+import {
+    FaSearch, FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote,
+    FaCog, FaTrash, FaCode, FaMusic, FaComments, FaImage, FaCalendarAlt,
+    FaCloudSun, FaEnvelope, FaTasks, FaChartArea, FaFileImage, FaFileAlt,
+    FaAppStore, FaBook, FaClock, FaAddressBook, FaBookOpen, FaHdd,
+    FaVideo, FaFont, FaMapMarkedAlt, FaNewspaper, FaCamera, FaPodcast,
+    FaBolt, FaChartLine, FaInfoCircle, FaMicrophone
+} from 'react-icons/fa'
 
+// All apps organized with proper icons
 const apps = [
+    // Core Apps
     { id: 'finder', title: 'Finder', icon: FaFolderOpen, color: 'text-blue-500' },
     { id: 'safari', title: 'Safari', icon: FaSafari, color: 'text-blue-400' },
     { id: 'mail', title: 'Mail', icon: FaEnvelope, color: 'text-blue-500' },
     { id: 'messages', title: 'Messages', icon: FaComments, color: 'text-green-500' },
-    { id: 'music', title: 'Music', icon: FaMusic, color: 'text-red-500' },
+    { id: 'facetime', title: 'FaceTime', icon: FaVideo, color: 'text-green-400' },
+    { id: 'maps', title: 'Maps', icon: FaMapMarkedAlt, color: 'text-green-600' },
     { id: 'photos', title: 'Photos', icon: FaImage, color: 'text-pink-500' },
-    { id: 'textedit', title: 'TextEdit', icon: FaFileAlt, color: 'text-gray-600' },
-    { id: 'preview', title: 'Preview', icon: FaFileImage, color: 'text-orange-400' },
+    { id: 'photobooth', title: 'Photo Booth', icon: FaCamera, color: 'text-red-400' },
+
+    // Productivity
     { id: 'calendar', title: 'Calendar', icon: FaCalendarAlt, color: 'text-red-500' },
     { id: 'reminders', title: 'Reminders', icon: FaTasks, color: 'text-orange-500' },
+    { id: 'notes', title: 'Notes', icon: FaRegStickyNote, color: 'text-yellow-500' },
+    { id: 'contacts', title: 'Contacts', icon: FaAddressBook, color: 'text-amber-600' },
+    { id: 'clock', title: 'Clock', icon: FaClock, color: 'text-orange-400' },
+    { id: 'shortcuts', title: 'Shortcuts', icon: FaBolt, color: 'text-pink-500' },
+
+    // Media & Entertainment
+    { id: 'music', title: 'Music', icon: FaMusic, color: 'text-red-500' },
+    { id: 'podcasts', title: 'Podcasts', icon: FaPodcast, color: 'text-purple-500' },
+    { id: 'news', title: 'News', icon: FaNewspaper, color: 'text-red-600' },
+    { id: 'stocks', title: 'Stocks', icon: FaChartLine, color: 'text-green-500' },
     { id: 'weather', title: 'Weather', icon: FaCloudSun, color: 'text-cyan-500' },
+    { id: 'books', title: 'Books', icon: FaBook, color: 'text-orange-500' },
+    { id: 'voice-memos', title: 'Voice Memos', icon: FaMicrophone, color: 'text-red-400' },
+
+    // Creativity & Documents
+    { id: 'textedit', title: 'TextEdit', icon: FaFileAlt, color: 'text-gray-600' },
+    { id: 'preview', title: 'Preview', icon: FaFileImage, color: 'text-orange-400' },
+    { id: 'dictionary', title: 'Dictionary', icon: FaBookOpen, color: 'text-gray-500' },
+    { id: 'font-book', title: 'Font Book', icon: FaFont, color: 'text-gray-600' },
+
+    // Developer & Utilities
     { id: 'vscode', title: 'VS Code', icon: FaCode, color: 'text-blue-600' },
     { id: 'terminal', title: 'Terminal', icon: FaTerminal, color: 'text-gray-700' },
-    { id: 'activity-monitor', title: 'Activity Monitor', icon: FaChartArea, color: 'text-purple-500' },
+    { id: 'activity-monitor', title: 'Activity Monitor', icon: FaChartArea, color: 'text-green-500' },
+    { id: 'disk-utility', title: 'Disk Utility', icon: FaHdd, color: 'text-gray-500' },
+    { id: 'system-info', title: 'System Info', icon: FaInfoCircle, color: 'text-blue-500' },
+
+    // Others
+    { id: 'appstore', title: 'App Store', icon: FaAppStore, color: 'text-blue-500' },
     { id: 'calculator', title: 'Calculator', icon: FaCalculator, color: 'text-gray-600' },
-    { id: 'notes', title: 'Notes', icon: FaRegStickyNote, color: 'text-yellow-500' },
     { id: 'settings', title: 'Settings', icon: FaCog, color: 'text-gray-500' },
+    { id: 'trash', title: 'Trash', icon: FaTrash, color: 'text-gray-400' },
 ]
 
 // Items per page based on screen size
@@ -155,7 +191,9 @@ const Launchpad = () => {
                             >
                                 <app.icon className={app.color} />
                             </motion.div>
-                            <span className="text-white font-medium text-xs sm:text-sm drop-shadow-md">{app.title}</span>
+                            <span className="text-white font-medium text-xs sm:text-sm drop-shadow-md text-center truncate max-w-[80px] sm:max-w-[100px]">
+                                {app.title}
+                            </span>
                         </motion.div>
                     ))}
                 </div>
