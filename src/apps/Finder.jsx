@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react'
-import { FaFolder, FaDesktop, FaDownload, FaRegFileImage, FaRegFileCode, FaRegFile, FaCloud, FaHome, FaPlus, FaTrash, FaEdit, FaCopy, FaPaste, FaCut, FaArrowLeft, FaArrowRight, FaSearch, FaFilePdf, FaFileVideo, FaFileAudio, FaFileArchive, FaEye, FaColumns } from 'react-icons/fa'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { FaFolder, FaDesktop, FaDownload, FaRegFileImage, FaRegFileCode, FaRegFile, FaCloud, FaHome, FaPlus, FaTrash, FaEdit, FaCopy, FaPaste, FaCut, FaArrowLeft, FaArrowRight, FaSearch, FaFilePdf, FaFileVideo, FaFileAudio, FaFileArchive, FaEye, FaColumns, FaGripVertical } from 'react-icons/fa'
 import { useStore } from '../store/useStore'
 import QuickLook from '../components/system/QuickLook'
+import { useDragDrop, useDropTarget } from '../context/DragDropContext'
 
 const Finder = () => {
     const { darkMode } = useStore()
@@ -45,6 +46,85 @@ const Finder = () => {
 
     const renameInputRef = useRef(null)
     const { moveToTrash, openWindow } = useStore()
+    const { startDrag, updateDragPosition, executeDrop, isDragging, dragData } = useDragDrop()
+
+    // Handle drop from other apps
+    const handleFileDrop = useCallback((data) => {
+        if (data.type === 'file' || data.type === 'finder-file') {
+            // Create a new file entry from dropped data
+            const newFile = {
+                id: Date.now(),
+                name: data.name || 'Dropped File',
+                type: data.fileType || 'file',
+                size: data.size || '-',
+                modified: new Date().toISOString().split('T')[0],
+                icon: data.icon || FaRegFile
+            }
+            setFileSystem(prev => ({
+                ...prev,
+                [currentPath]: [...(prev[currentPath] || []), newFile]
+            }))
+        } else if (data.type === 'note') {
+            // Convert note to text file
+            const newFile = {
+                id: Date.now(),
+                name: `${data.name || 'Note'}.txt`,
+                type: 'text',
+                size: `${Math.round((data.content?.length || 0) / 100)} KB`,
+                modified: new Date().toISOString().split('T')[0],
+                icon: FaRegFile
+            }
+            setFileSystem(prev => ({
+                ...prev,
+                [currentPath]: [...(prev[currentPath] || []), newFile]
+            }))
+        } else if (data.type === 'photo') {
+            // Add photo as image file
+            const newFile = {
+                id: Date.now(),
+                name: data.name || 'Photo.png',
+                type: 'image',
+                size: data.size || '2.1 MB',
+                modified: new Date().toISOString().split('T')[0],
+                icon: FaRegFileImage
+            }
+            setFileSystem(prev => ({
+                ...prev,
+                [currentPath]: [...(prev[currentPath] || []), newFile]
+            }))
+        }
+    }, [currentPath])
+
+    const { ref: dropRef, isOver } = useDropTarget('finder-main', handleFileDrop, ['file', 'finder-file', 'note', 'photo'])
+
+    // Handle drag start for files
+    const handleFileDragStart = useCallback((file, e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const position = { x: e.clientX, y: e.clientY }
+        startDrag({
+            id: `finder-${file.id}`,
+            type: 'finder-file',
+            name: file.name,
+            fileType: file.type,
+            size: file.size,
+            icon: file.icon,
+            sourcePath: currentPath
+        }, position)
+
+        const handleMouseMove = (moveEvent) => {
+            updateDragPosition({ x: moveEvent.clientX, y: moveEvent.clientY })
+        }
+
+        const handleMouseUp = () => {
+            executeDrop()
+            document.removeEventListener('mousemove', handleMouseMove)
+            document.removeEventListener('mouseup', handleMouseUp)
+        }
+
+        document.addEventListener('mousemove', handleMouseMove)
+        document.addEventListener('mouseup', handleMouseUp)
+    }, [startDrag, updateDragPosition, executeDrop, currentPath])
 
     // 根据文件类型获取应用ID
     const getAppForFileType = (type) => {
@@ -506,7 +586,10 @@ const Finder = () => {
                 <div className="flex-1 flex">
                     {/* 主内容区域 */}
                     <div
-                        className={`${showPreviewPanel ? 'flex-1' : 'w-full'} p-4 overflow-auto transition-all duration-300`}
+                        ref={dropRef}
+                        className={`${showPreviewPanel ? 'flex-1' : 'w-full'} p-4 overflow-auto transition-all duration-300 ${
+                            isOver ? 'ring-4 ring-blue-400 ring-inset bg-blue-50/10' : ''
+                        }`}
                         onContextMenu={(e) => handleContextMenu(e)}
                     >
                     {/* 面包屑导航 */}
@@ -539,7 +622,7 @@ const Finder = () => {
                                     onDoubleClick={() => handleItemDoubleClick(file)}
                                     onContextMenu={(e) => handleContextMenu(e, file.id)}
                                     className={`
-                                        flex flex-col items-center gap-2 p-3 rounded-lg cursor-pointer transition-all
+                                        flex flex-col items-center gap-2 p-3 rounded-lg cursor-pointer transition-all relative group
                                         ${isSelected
                                             ? darkMode ? 'bg-blue-600 ring-2 ring-blue-500' : 'bg-blue-100 ring-2 ring-blue-400'
                                             : darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
@@ -547,6 +630,16 @@ const Finder = () => {
                                         ${isCut ? 'opacity-50' : ''}
                                     `}
                                 >
+                                    {/* Drag handle */}
+                                    <div
+                                        onMouseDown={(e) => handleFileDragStart(file, e)}
+                                        className={`absolute top-1 left-1 p-1 rounded opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity ${
+                                            darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'
+                                        }`}
+                                        title="Drag to move"
+                                    >
+                                        <FaGripVertical className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-400'}`} />
+                                    </div>
                                     <Icon className={`text-5xl ${file.type === 'folder' ? 'text-blue-400' : 'text-gray-400'} ${isCut ? 'opacity-60' : ''}`} />
                                     {isRenaming ? (
                                         <input

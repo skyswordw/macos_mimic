@@ -7,6 +7,7 @@ export const useKeyboardShortcuts = () => {
         toggleLaunchpad,
         toggleMissionControl,
         toggleNotificationCenter,
+        toggleWidgets,
         activeWindowId,
         closeWindow,
         minimizeWindow,
@@ -14,6 +15,9 @@ export const useKeyboardShortcuts = () => {
         openWindow,
         windows,
         focusWindow,
+        setLockScreen,
+        setEmojiPicker,
+        setSiri,
     } = useStore()
 
     useEffect(() => {
@@ -119,6 +123,38 @@ export const useKeyboardShortcuts = () => {
                         e.preventDefault()
                         openWindow('music', 'Music', 'music')
                         break
+                    case 'd':
+                        e.preventDefault()
+                        openWindow('dictionary', 'Dictionary', 'dictionary')
+                        break
+                    case 'a':
+                        e.preventDefault()
+                        openWindow('activity-monitor', 'Activity Monitor', 'activity-monitor')
+                        break
+                    case 'b':
+                        e.preventDefault()
+                        openWindow('books', 'Books', 'books')
+                        break
+                    case 'k':
+                        e.preventDefault()
+                        openWindow('clock', 'Clock', 'clock')
+                        break
+                    case 'o':
+                        e.preventDefault()
+                        openWindow('stocks', 'Stocks', 'stocks')
+                        break
+                    case 'e':
+                        e.preventDefault()
+                        openWindow('textedit', 'TextEdit', 'textedit')
+                        break
+                    case 'g':
+                        e.preventDefault()
+                        openWindow('messages', 'Messages', 'messages')
+                        break
+                    case 'i':
+                        e.preventDefault()
+                        openWindow('system-info', 'System Info', 'system-info')
+                        break
                 }
                 return
             }
@@ -143,6 +179,43 @@ export const useKeyboardShortcuts = () => {
                 }
                 return
             }
+
+            // Quit application: Cmd+Q
+            if (modKey && e.key === 'q') {
+                e.preventDefault()
+                if (activeWindowId) {
+                    closeWindow(activeWindowId)
+                }
+                return
+            }
+
+            // Widgets: Cmd+W (when not in window context)
+            if (modKey && e.key === 'e' && !e.shiftKey && !activeWindowId) {
+                e.preventDefault()
+                toggleWidgets()
+                return
+            }
+
+            // Lock Screen: Cmd+Ctrl+Q
+            if (modKey && e.ctrlKey && e.key === 'q') {
+                e.preventDefault()
+                setLockScreen(true)
+                return
+            }
+
+            // Emoji Picker: Cmd+Ctrl+Space
+            if (modKey && e.ctrlKey && e.key === ' ') {
+                e.preventDefault()
+                setEmojiPicker(true, { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 200 })
+                return
+            }
+
+            // Siri: Cmd+Space (long press would be better, but we use Cmd+Alt+S)
+            if (modKey && e.altKey && e.key === 's') {
+                e.preventDefault()
+                setSiri(true)
+                return
+            }
         }
 
         const isInputFocused = () => {
@@ -161,6 +234,7 @@ export const useKeyboardShortcuts = () => {
         toggleLaunchpad,
         toggleMissionControl,
         toggleNotificationCenter,
+        toggleWidgets,
         activeWindowId,
         closeWindow,
         minimizeWindow,
@@ -168,6 +242,9 @@ export const useKeyboardShortcuts = () => {
         openWindow,
         windows,
         focusWindow,
+        setLockScreen,
+        setEmojiPicker,
+        setSiri,
     ])
 }
 

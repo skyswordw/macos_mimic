@@ -1,6 +1,163 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useStore } from '../store/useStore'
+
+// Terminal themes
+const themes = {
+    dark: {
+        name: 'Dark',
+        background: '#1e1e1e',
+        foreground: '#ffffff',
+        prompt: '#10b981',
+        directory: '#60a5fa',
+        cursor: '#10b981',
+        selection: 'rgba(255,255,255,0.2)',
+    },
+    light: {
+        name: 'Light',
+        background: '#f5f5f5',
+        foreground: '#1a1a1a',
+        prompt: '#059669',
+        directory: '#2563eb',
+        cursor: '#059669',
+        selection: 'rgba(0,0,0,0.1)',
+    },
+    dracula: {
+        name: 'Dracula',
+        background: '#282a36',
+        foreground: '#f8f8f2',
+        prompt: '#50fa7b',
+        directory: '#8be9fd',
+        cursor: '#50fa7b',
+        selection: 'rgba(68,71,90,0.5)',
+    },
+    monokai: {
+        name: 'Monokai',
+        background: '#272822',
+        foreground: '#f8f8f2',
+        prompt: '#a6e22e',
+        directory: '#66d9ef',
+        cursor: '#f8f8f2',
+        selection: 'rgba(73,72,62,0.5)',
+    },
+    matrix: {
+        name: 'Matrix',
+        background: '#0d0d0d',
+        foreground: '#00ff00',
+        prompt: '#00ff00',
+        directory: '#00cc00',
+        cursor: '#00ff00',
+        selection: 'rgba(0,255,0,0.1)',
+    },
+    ocean: {
+        name: 'Ocean',
+        background: '#1b2838',
+        foreground: '#c0c5ce',
+        prompt: '#99c794',
+        directory: '#6699cc',
+        cursor: '#c0c5ce',
+        selection: 'rgba(78,111,132,0.3)',
+    },
+    solarized: {
+        name: 'Solarized',
+        background: '#002b36',
+        foreground: '#839496',
+        prompt: '#859900',
+        directory: '#268bd2',
+        cursor: '#839496',
+        selection: 'rgba(7,54,66,0.5)',
+    },
+    retro: {
+        name: 'Retro',
+        background: '#3c0a00',
+        foreground: '#ff6600',
+        prompt: '#ffcc00',
+        directory: '#ff9900',
+        cursor: '#ff6600',
+        selection: 'rgba(255,102,0,0.2)',
+    },
+}
+
+// ASCII art generator for neofetch
+const asciiLogo = `
+                    'c.
+                 ,xNMM.
+               .OMMMMo
+               OMMM0,
+     .;loddo:' loolloddol;.
+   cKMMMMMMMMMMNWMMMMMMMMMM0:
+ .KMMMMMMMMMMMMMMMMMMMMMMMWd.
+ XMMMMMMMMMMMMMMMMMMMMMMMX.
+;MMMMMMMMMMMMMMMMMMMMMMMM:
+:MMMMMMMMMMMMMMMMMMMMMMMM:
+.MMMMMMMMMMMMMMMMMMMMMMMMX.
+ kMMMMMMMMMMMMMMMMMMMMMMMMWd.
+ .XMMMMMMMMMMMMMMMMMMMMMMMMMMk
+  .XMMMMMMMMMMMMMMMMMMMMMMMMK.
+    kMMMMMMMMMMMMMMMMMMMMMMd
+     ;KMMMMMMMWXXWMMMMMMMk.
+       .coeli;,, .,googl;'
+`
+
+// Cowsay generator
+const cowsay = (text) => {
+    const lines = text.match(/.{1,40}/g) || [text]
+    const maxLen = Math.max(...lines.map(l => l.length))
+    const top = ' ' + '_'.repeat(maxLen + 2)
+    const bottom = ' ' + '-'.repeat(maxLen + 2)
+    const speech = lines.map(l => `< ${l.padEnd(maxLen)} >`).join('\n')
+    const cow = `
+        \\   ^__^
+         \\  (oo)\\_______
+            (__)\\       )\\/\\
+                ||----w |
+                ||     ||`
+    return `${top}\n${speech}\n${bottom}${cow}`
+}
+
+// Figlet-like text (simple block letters)
+const figlet = (text) => {
+    const letters = {
+        'A': ['  #  ', ' # # ', '#####', '#   #', '#   #'],
+        'B': ['#### ', '#   #', '#### ', '#   #', '#### '],
+        'C': [' ####', '#    ', '#    ', '#    ', ' ####'],
+        'D': ['#### ', '#   #', '#   #', '#   #', '#### '],
+        'E': ['#####', '#    ', '#### ', '#    ', '#####'],
+        'F': ['#####', '#    ', '#### ', '#    ', '#    '],
+        'G': [' ####', '#    ', '# ###', '#   #', ' ####'],
+        'H': ['#   #', '#   #', '#####', '#   #', '#   #'],
+        'I': ['#####', '  #  ', '  #  ', '  #  ', '#####'],
+        'J': ['#####', '    #', '    #', '#   #', ' ### '],
+        'K': ['#   #', '#  # ', '###  ', '#  # ', '#   #'],
+        'L': ['#    ', '#    ', '#    ', '#    ', '#####'],
+        'M': ['#   #', '## ##', '# # #', '#   #', '#   #'],
+        'N': ['#   #', '##  #', '# # #', '#  ##', '#   #'],
+        'O': [' ### ', '#   #', '#   #', '#   #', ' ### '],
+        'P': ['#### ', '#   #', '#### ', '#    ', '#    '],
+        'Q': [' ### ', '#   #', '# # #', '#  # ', ' ## #'],
+        'R': ['#### ', '#   #', '#### ', '#  # ', '#   #'],
+        'S': [' ####', '#    ', ' ### ', '    #', '#### '],
+        'T': ['#####', '  #  ', '  #  ', '  #  ', '  #  '],
+        'U': ['#   #', '#   #', '#   #', '#   #', ' ### '],
+        'V': ['#   #', '#   #', '#   #', ' # # ', '  #  '],
+        'W': ['#   #', '#   #', '# # #', '## ##', '#   #'],
+        'X': ['#   #', ' # # ', '  #  ', ' # # ', '#   #'],
+        'Y': ['#   #', ' # # ', '  #  ', '  #  ', '  #  '],
+        'Z': ['#####', '   # ', '  #  ', ' #   ', '#####'],
+        ' ': ['     ', '     ', '     ', '     ', '     '],
+    }
+    const result = ['', '', '', '', '']
+    for (const char of text.toUpperCase()) {
+        const letter = letters[char] || letters[' ']
+        for (let i = 0; i < 5; i++) {
+            result[i] += letter[i] + ' '
+        }
+    }
+    return result.join('\n')
+}
 
 const Terminal = () => {
+    const { darkMode } = useStore()
+    const [currentTheme, setCurrentTheme] = useState('dark')
     // 模拟文件系统
     const [fileSystem, setFileSystem] = useState({
         '/': {
@@ -680,6 +837,202 @@ Date:   ${new Date().toDateString()}
                 }
                 return `git: '${args[0]}' is not a git command.`
 
+            case 'neofetch':
+            case 'fastfetch': {
+                const theme = themes[currentTheme]
+                return `${asciiLogo}
+                        guest@MacBook-Pro
+                        -----------------
+                        OS: macOS 14.2.1 Sonoma
+                        Host: MacBook Pro (14-inch, 2021)
+                        Kernel: Darwin 23.2.0
+                        Uptime: ${Math.floor(Math.random() * 24)} hours
+                        Packages: 156 (brew)
+                        Shell: zsh 5.9
+                        Resolution: 3024x1964 @ 120Hz
+                        DE: Aqua
+                        WM: Quartz Compositor
+                        Terminal: macOS Mimic Terminal
+                        Theme: ${theme.name}
+                        CPU: Apple M1 Pro (10) @ 3.23GHz
+                        GPU: Apple M1 Pro
+                        Memory: 8.2GB / 16GB`
+            }
+
+            case 'cowsay': {
+                if (args.length === 0) {
+                    return cowsay('Moo!')
+                }
+                return cowsay(args.join(' '))
+            }
+
+            case 'figlet': {
+                if (args.length === 0) {
+                    return 'usage: figlet text'
+                }
+                return figlet(args.join(' ').slice(0, 10))
+            }
+
+            case 'fortune': {
+                const fortunes = [
+                    'A journey of a thousand miles begins with a single step.',
+                    'The best time to plant a tree was 20 years ago. The second best time is now.',
+                    'Code is like humor. When you have to explain it, it\'s bad.',
+                    'First, solve the problem. Then, write the code.',
+                    'The only way to do great work is to love what you do.',
+                    'Talk is cheap. Show me the code.',
+                    'Any fool can write code that a computer can understand. Good programmers write code that humans can understand.',
+                    'Simplicity is the soul of efficiency.',
+                ]
+                return fortunes[Math.floor(Math.random() * fortunes.length)]
+            }
+
+            case 'theme': {
+                if (args.length === 0) {
+                    return `Available themes: ${Object.keys(themes).join(', ')}\nCurrent theme: ${currentTheme}\nUsage: theme <name>`
+                }
+                if (themes[args[0]]) {
+                    setCurrentTheme(args[0])
+                    return `Theme changed to ${themes[args[0]].name}`
+                }
+                return `Unknown theme: ${args[0]}. Available: ${Object.keys(themes).join(', ')}`
+            }
+
+            case 'cmatrix': {
+                return `
+ ╔══════════════════════════════════════════════╗
+ ║  ░▒▓ MATRIX RAIN SIMULATION ▓▒░              ║
+ ║                                              ║
+ ║  01001000 01100101 01101100 01101100         ║
+ ║  ████▓▓░░ ░░▓▓████ ████▓▓░░ ░░▓▓████         ║
+ ║  10101010 11110000 00001111 10101010         ║
+ ║  ░░▓▓████ ████▓▓░░ ░░▓▓████ ████▓▓░░         ║
+ ║  01110111 01101111 01110010 01101100         ║
+ ║                                              ║
+ ║  [Matrix visualization - simulation only]    ║
+ ╚══════════════════════════════════════════════╝`
+            }
+
+            case 'sl': {
+                return `
+      ====        ________                ___________
+  _D _|  |_______/        \\__I_I_____===__|_________|
+   |(_)---  |   H\\________/ |   |        =|___ ___|
+   /     |  |   H  |  |     |   |         ||_| |_||
+  |      |  |   H  |__--------------------| [___] |
+  | ________|___H__/__|_____/[][]~\\_______|       |
+  |/ |   |-----------I_____I [][] []  D   |=======|__
+__/ =| o |=-O=====O=====O=====O \\ ____Y___________|__
+ |/-=|___|=    ||    ||    ||    |_____/~\\___/
+  \\_/      \\__/  \\__/  \\__/  \\__/      \\_/
+
+🚂 Choo choo! (Train passed by)`
+            }
+
+            case 'lolcat': {
+                if (args.length === 0) {
+                    return 'usage: lolcat <text> (Rainbow text simulation)'
+                }
+                const text = args.join(' ')
+                const colors = ['🔴', '🟠', '🟡', '🟢', '🔵', '🟣']
+                return text.split('').map((c, i) => c === ' ' ? ' ' : colors[i % colors.length]).join('') + '\n' + text
+            }
+
+            case 'weather': {
+                return `
+Weather Report for San Francisco, CA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     \\   /      Partly Cloudy
+      .-.       🌡️  18°C (64°F)
+   ― (   ) ―    💨 Wind: 12 km/h
+      \`-'       💧 Humidity: 65%
+     /   \\      🌅 Sunrise: 6:42 AM
+                🌇 Sunset: 5:28 PM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+            }
+
+            case 'joke': {
+                const jokes = [
+                    'Why do programmers prefer dark mode? Because light attracts bugs!',
+                    'A SQL query walks into a bar, walks up to two tables and asks... "Can I join you?"',
+                    'Why do Java developers wear glasses? Because they don\'t C#!',
+                    '!false - It\'s funny because it\'s true.',
+                    'There are only 10 types of people in the world: those who understand binary and those who don\'t.',
+                    'A programmer\'s wife tells him: "Go to the store and buy a loaf of bread. If they have eggs, buy a dozen." He comes home with 12 loaves of bread.',
+                ]
+                return jokes[Math.floor(Math.random() * jokes.length)]
+            }
+
+            case 'matrix': {
+                setCurrentTheme('matrix')
+                return 'Welcome to the Matrix, Neo. Theme changed.'
+            }
+
+            case 'ascii': {
+                if (args.length === 0) {
+                    return 'usage: ascii <character>'
+                }
+                const char = args[0]
+                return `Character: ${char}\nASCII Code: ${char.charCodeAt(0)}\nHex: 0x${char.charCodeAt(0).toString(16)}\nBinary: ${char.charCodeAt(0).toString(2)}`
+            }
+
+            case 'base64': {
+                if (args.length < 2) {
+                    return 'usage: base64 <encode|decode> <text>'
+                }
+                if (args[0] === 'encode') {
+                    return btoa(args.slice(1).join(' '))
+                } else if (args[0] === 'decode') {
+                    try {
+                        return atob(args.slice(1).join(' '))
+                    } catch {
+                        return 'Invalid base64 string'
+                    }
+                }
+                return 'usage: base64 <encode|decode> <text>'
+            }
+
+            case 'md5':
+            case 'sha256': {
+                if (args.length === 0) {
+                    return `usage: ${cmd} <text>`
+                }
+                // Simulate hash (not real hash, just for demo)
+                const text = args.join(' ')
+                const hash = Array.from(text).reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0).toString(16)
+                return `${cmd.toUpperCase()}: ${hash.padStart(32, '0').slice(0, cmd === 'md5' ? 32 : 64)}`
+            }
+
+            case 'uuid': {
+                const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                    const r = Math.random() * 16 | 0
+                    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+                })
+                return uuid
+            }
+
+            case 'qr': {
+                if (args.length === 0) {
+                    return 'usage: qr <text>'
+                }
+                return `
+█████████████████████████████
+█████████████████████████████
+████ ▄▄▄▄▄ █▀▄▀▄█ ▄▄▄▄▄ ████
+████ █   █ █▄▀▄▀█ █   █ ████
+████ █▄▄▄█ █ ▀▄██ █▄▄▄█ ████
+████▄▄▄▄▄▄▄█ ▀ █ █▄▄▄▄▄▄████
+████ ▄▄▄▀ ▄▀▄▀▀▄ ▄   █ █████
+█████▄██▄▄▄▀▄▄▀▄▀█▀█▀▀ █████
+████ ▄▄▄▄▄ █▄ ▀██   ▄▄▀█████
+████ █   █ █ ▀▄▀█▀▀▄█  █████
+████ █▄▄▄█ █▀ ▀ ▀ ▄▄█▄ █████
+████▄▄▄▄▄▄▄█▄█▄▄▄██▄██▄█████
+█████████████████████████████
+
+(QR Code for: "${args.join(' ')}")`
+            }
+
             default:
                 // 检查是否是变量赋值
                 if (cmd.includes('=')) {
@@ -816,27 +1169,31 @@ Date:   ${new Date().toDateString()}
         return content
     }
 
+    const theme = themes[currentTheme]
+
     return (
         <div
-            className="w-full h-full bg-[#1e1e1e] text-white p-3 font-mono text-sm overflow-y-auto"
+            className="w-full h-full p-3 font-mono text-sm overflow-y-auto"
+            style={{ backgroundColor: theme.background, color: theme.foreground }}
             onClick={() => inputRef.current?.focus()}
         >
-            <style jsx>{`
+            <style>{`
                 @keyframes blink {
                     0%, 50% { opacity: 1; }
                     51%, 100% { opacity: 0; }
                 }
-                .cursor::after {
+                .cursor-${currentTheme}::after {
                     content: '█';
                     animation: blink 1s infinite;
-                    color: #10b981;
+                    color: ${theme.cursor};
                 }
             `}</style>
 
             {history.map((item, i) => (
-                <div key={i} className={`${item.type === 'input' ? 'mt-1' : 'text-gray-300'} whitespace-pre-wrap`}>
+                <div key={i} className={`${item.type === 'input' ? 'mt-1' : ''} whitespace-pre-wrap`}
+                     style={{ color: item.type === 'input' ? theme.foreground : theme.foreground + 'cc' }}>
                     {item.type === 'input' && (
-                        <span className="text-green-400 mr-2">
+                        <span className="mr-2" style={{ color: theme.prompt }}>
                             {getPrompt()}
                         </span>
                     )}
@@ -845,7 +1202,7 @@ Date:   ${new Date().toDateString()}
             ))}
 
             <div className="flex mt-1 items-center">
-                <span className="text-green-400 mr-2">{getPrompt()}</span>
+                <span className="mr-2" style={{ color: theme.prompt }}>{getPrompt()}</span>
                 <div className="flex-1 relative">
                     <input
                         ref={inputRef}
@@ -854,16 +1211,17 @@ Date:   ${new Date().toDateString()}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         className="w-full bg-transparent outline-none border-none"
+                        style={{ color: theme.foreground }}
                         autoFocus
                         spellCheck={false}
                     />
-                    <span className="cursor absolute" style={{ left: `${input.length}ch` }}></span>
+                    <span className={`cursor-${currentTheme} absolute`} style={{ left: `${input.length}ch` }}></span>
                 </div>
             </div>
 
             {/* Tab 补全提示 */}
             {tabCompletions.length > 1 && (
-                <div className="text-gray-400 text-xs mt-1">
+                <div className="text-xs mt-1" style={{ color: theme.foreground + '99' }}>
                     {tabCompletions.join('  ')}
                 </div>
             )}

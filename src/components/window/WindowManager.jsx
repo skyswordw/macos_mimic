@@ -1,51 +1,105 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { useStore } from '../../store/useStore'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import Window from './Window'
-import Finder from '../../apps/Finder'
-import Safari from '../../apps/Safari'
-import Calculator from '../../apps/Calculator'
-import VSCode from '../../apps/VSCode'
-import Notes from '../../apps/Notes'
-import Settings from '../../apps/Settings'
-import Terminal from '../../apps/Terminal'
-import Music from '../../apps/Music'
-import Messages from '../../apps/Messages'
-import Photos from '../../apps/Photos'
-import Calendar from '../../apps/Calendar'
-import Trash from '../../apps/Trash'
-import Weather from '../../apps/Weather'
-import Mail from '../../apps/Mail'
-import Reminders from '../../apps/Reminders'
-import ActivityMonitor from '../../apps/ActivityMonitor'
-import Preview from '../../apps/Preview'
-import TextEdit from '../../apps/TextEdit'
+
+// Lazy load all apps for better performance
+const Finder = lazy(() => import('../../apps/Finder'))
+const Safari = lazy(() => import('../../apps/Safari'))
+const Calculator = lazy(() => import('../../apps/Calculator'))
+const VSCode = lazy(() => import('../../apps/VSCode'))
+const Notes = lazy(() => import('../../apps/Notes'))
+const Settings = lazy(() => import('../../apps/Settings'))
+const Terminal = lazy(() => import('../../apps/Terminal'))
+const Music = lazy(() => import('../../apps/Music'))
+const Messages = lazy(() => import('../../apps/Messages'))
+const Photos = lazy(() => import('../../apps/Photos'))
+const Calendar = lazy(() => import('../../apps/Calendar'))
+const Trash = lazy(() => import('../../apps/Trash'))
+const Weather = lazy(() => import('../../apps/Weather'))
+const Mail = lazy(() => import('../../apps/Mail'))
+const Reminders = lazy(() => import('../../apps/Reminders'))
+const ActivityMonitor = lazy(() => import('../../apps/ActivityMonitor'))
+const Preview = lazy(() => import('../../apps/Preview'))
+const TextEdit = lazy(() => import('../../apps/TextEdit'))
+const Clock = lazy(() => import('../../apps/Clock'))
+const Stocks = lazy(() => import('../../apps/Stocks'))
+const Maps = lazy(() => import('../../apps/Maps'))
+const FaceTime = lazy(() => import('../../apps/FaceTime'))
+const Books = lazy(() => import('../../apps/Books'))
+const Contacts = lazy(() => import('../../apps/Contacts'))
+const Podcasts = lazy(() => import('../../apps/Podcasts'))
+const DiskUtility = lazy(() => import('../../apps/DiskUtility'))
+const SystemInfo = lazy(() => import('../../apps/SystemInfo'))
+const News = lazy(() => import('../../apps/News'))
+const FontBook = lazy(() => import('../../apps/FontBook'))
+const PhotoBooth = lazy(() => import('../../apps/PhotoBooth'))
+const VoiceMemos = lazy(() => import('../../apps/VoiceMemos'))
+const AppStore = lazy(() => import('../../apps/AppStore'))
+const Dictionary = lazy(() => import('../../apps/Dictionary'))
+const Shortcuts = lazy(() => import('../../apps/Shortcuts'))
+
+// Loading spinner component
+const AppLoadingFallback = () => (
+    <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+        <motion.div
+            className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        />
+    </div>
+)
 
 const WindowManager = () => {
     const { windows, currentDesktop } = useStore()
 
     const getComponent = (id) => {
-        switch (id) {
-            case 'finder': return <Finder />
-            case 'safari': return <Safari />
-            case 'calculator': return <Calculator />
-            case 'vscode': return <VSCode />
-            case 'notes': return <Notes />
-            case 'settings': return <Settings />
-            case 'terminal': return <Terminal />
-            case 'music': return <Music />
-            case 'messages': return <Messages />
-            case 'photos': return <Photos />
-            case 'calendar': return <Calendar />
-            case 'trash': return <Trash />
-            case 'weather': return <Weather />
-            case 'mail': return <Mail />
-            case 'reminders': return <Reminders />
-            case 'activity-monitor': return <ActivityMonitor />
-            case 'preview': return <Preview />
-            case 'textedit': return <TextEdit />
-            default: return <div className="p-4">App not implemented yet</div>
+        const componentMap = {
+            'finder': Finder,
+            'safari': Safari,
+            'calculator': Calculator,
+            'vscode': VSCode,
+            'notes': Notes,
+            'settings': Settings,
+            'terminal': Terminal,
+            'music': Music,
+            'messages': Messages,
+            'photos': Photos,
+            'calendar': Calendar,
+            'trash': Trash,
+            'weather': Weather,
+            'mail': Mail,
+            'reminders': Reminders,
+            'activity-monitor': ActivityMonitor,
+            'preview': Preview,
+            'textedit': TextEdit,
+            'clock': Clock,
+            'stocks': Stocks,
+            'maps': Maps,
+            'facetime': FaceTime,
+            'books': Books,
+            'contacts': Contacts,
+            'podcasts': Podcasts,
+            'disk-utility': DiskUtility,
+            'system-info': SystemInfo,
+            'news': News,
+            'font-book': FontBook,
+            'photo-booth': PhotoBooth,
+            'voice-memos': VoiceMemos,
+            'app-store': AppStore,
+            'dictionary': Dictionary,
+            'shortcuts': Shortcuts,
         }
+
+        const Component = componentMap[id]
+        if (Component) {
+            return (
+                <Suspense fallback={<AppLoadingFallback />}>
+                    <Component />
+                </Suspense>
+            )
+        }
+        return <div className="p-4">App not implemented yet</div>
     }
 
     // 只显示当前桌面的窗口

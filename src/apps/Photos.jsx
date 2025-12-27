@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FaImage, FaTimes, FaChevronLeft, FaChevronRight, FaHeart, FaRegHeart, FaTrash, FaDownload, FaShareAlt, FaSearch, FaTh, FaThLarge, FaExpand, FaCompress, FaPlay, FaPause, FaInfo, FaCalendar, FaMapMarkerAlt, FaStar } from 'react-icons/fa'
+import { FaImage, FaTimes, FaChevronLeft, FaChevronRight, FaHeart, FaRegHeart, FaTrash, FaDownload, FaShareAlt, FaSearch, FaTh, FaThLarge, FaExpand, FaCompress, FaPlay, FaPause, FaInfo, FaCalendar, FaMapMarkerAlt, FaStar, FaGripVertical } from 'react-icons/fa'
 import { useStore } from '../store/useStore'
+import { useDragDrop, useDropTarget } from '../context/DragDropContext'
 
 // Load favorites from localStorage
 const loadFavorites = () => {
@@ -38,6 +39,7 @@ const albums = [
 
 const Photos = () => {
     const { darkMode, addNotification } = useStore()
+    const { startDrag, updateDragPosition, executeDrop } = useDragDrop()
 
     // Load saved favorites
     const savedFavorites = loadFavorites()
@@ -47,6 +49,55 @@ const Photos = () => {
             favorite: savedFavorites.includes(photo.id)
         }))
     )
+
+    // Handle drop - accept image files from Finder
+    const handleDrop = useCallback((data) => {
+        if ((data.type === 'finder-file' || data.type === 'file') && data.fileType === 'image') {
+            const newPhoto = {
+                id: Date.now(),
+                url: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800',
+                title: data.name || 'Dropped Photo',
+                date: new Date().toISOString().split('T')[0],
+                location: 'Unknown',
+                favorite: false
+            }
+            setPhotos(prev => [newPhoto, ...prev])
+            addNotification({
+                title: 'Photo Added',
+                message: `"${data.name}" has been added to your library`,
+                app: 'Photos'
+            })
+        }
+    }, [addNotification])
+
+    const { ref: dropRef, isOver } = useDropTarget('photos-main', handleDrop, ['finder-file', 'file'])
+
+    // Handle dragging a photo
+    const handlePhotoDragStart = useCallback((photo, e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const position = { x: e.clientX, y: e.clientY }
+        startDrag({
+            id: `photo-${photo.id}`,
+            type: 'photo',
+            name: photo.title,
+            url: photo.url,
+            size: '2.1 MB'
+        }, position)
+
+        const handleMouseMove = (moveEvent) => {
+            updateDragPosition({ x: moveEvent.clientX, y: moveEvent.clientY })
+        }
+
+        const handleMouseUp = () => {
+            executeDrop()
+            document.removeEventListener('mousemove', handleMouseMove)
+            document.removeEventListener('mouseup', handleMouseUp)
+        }
+
+        document.addEventListener('mousemove', handleMouseMove)
+        document.addEventListener('mouseup', handleMouseUp)
+    }, [startDrag, updateDragPosition, executeDrop])
 
     const [selectedPhoto, setSelectedPhoto] = useState(null)
     const [currentIndex, setCurrentIndex] = useState(0)
@@ -175,7 +226,7 @@ const Photos = () => {
     }, [selectedPhoto, currentIndex, filteredPhotos])
 
     return (
-        <div className={`w-full h-full flex ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div ref={dropRef} className={`w-full h-full flex ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} ${isOver ? 'ring-4 ring-pink-400 ring-inset' : ''}`}>
             {/* Sidebar */}
             <div className={`w-48 flex-shrink-0 border-r ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-100 border-gray-200'}`}>
                 <div className="p-4">
@@ -278,6 +329,15 @@ const Photos = () => {
                                     loading="lazy"
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+
+                                {/* Drag handle */}
+                                <div
+                                    onMouseDown={(e) => handlePhotoDragStart(photo, e)}
+                                    className="absolute top-2 left-2 p-1.5 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+                                    title="Drag to export"
+                                >
+                                    <FaGripVertical className="w-3 h-3 text-white" />
+                                </div>
 
                                 {/* Favorite indicator */}
                                 <button

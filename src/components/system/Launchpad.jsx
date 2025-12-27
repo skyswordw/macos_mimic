@@ -1,15 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
-import { FaSearch, FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaTrash, FaCode, FaMusic, FaComments, FaImage, FaCalendarAlt, FaCloudSun, FaEnvelope, FaTasks, FaChartArea, FaFileImage, FaFileAlt } from 'react-icons/fa'
+import { FaSearch, FaFolderOpen, FaSafari, FaTerminal, FaCalculator, FaRegStickyNote, FaCog, FaCode, FaMusic, FaComments, FaImage, FaCalendarAlt, FaCloudSun, FaEnvelope, FaTasks, FaChartArea, FaFileImage, FaFileAlt, FaClock, FaChartLine, FaMapMarkerAlt, FaVideo, FaBook, FaAddressBook, FaPodcast, FaHdd, FaInfoCircle, FaNewspaper, FaFont, FaCamera, FaMicrophone, FaStore, FaBookOpen, FaMagic } from 'react-icons/fa'
 
 const apps = [
     { id: 'finder', title: 'Finder', icon: FaFolderOpen, color: 'text-blue-500' },
     { id: 'safari', title: 'Safari', icon: FaSafari, color: 'text-blue-400' },
     { id: 'mail', title: 'Mail', icon: FaEnvelope, color: 'text-blue-500' },
     { id: 'messages', title: 'Messages', icon: FaComments, color: 'text-green-500' },
+    { id: 'facetime', title: 'FaceTime', icon: FaVideo, color: 'text-green-500' },
     { id: 'music', title: 'Music', icon: FaMusic, color: 'text-red-500' },
     { id: 'photos', title: 'Photos', icon: FaImage, color: 'text-pink-500' },
+    { id: 'books', title: 'Books', icon: FaBook, color: 'text-orange-500' },
+    { id: 'maps', title: 'Maps', icon: FaMapMarkerAlt, color: 'text-green-600' },
+    { id: 'stocks', title: 'Stocks', icon: FaChartLine, color: 'text-green-500' },
+    { id: 'clock', title: 'Clock', icon: FaClock, color: 'text-orange-500' },
     { id: 'textedit', title: 'TextEdit', icon: FaFileAlt, color: 'text-gray-600' },
     { id: 'preview', title: 'Preview', icon: FaFileImage, color: 'text-orange-400' },
     { id: 'calendar', title: 'Calendar', icon: FaCalendarAlt, color: 'text-red-500' },
@@ -20,6 +25,17 @@ const apps = [
     { id: 'activity-monitor', title: 'Activity Monitor', icon: FaChartArea, color: 'text-purple-500' },
     { id: 'calculator', title: 'Calculator', icon: FaCalculator, color: 'text-gray-600' },
     { id: 'notes', title: 'Notes', icon: FaRegStickyNote, color: 'text-yellow-500' },
+    { id: 'contacts', title: 'Contacts', icon: FaAddressBook, color: 'text-brown-500' },
+    { id: 'podcasts', title: 'Podcasts', icon: FaPodcast, color: 'text-purple-500' },
+    { id: 'disk-utility', title: 'Disk Utility', icon: FaHdd, color: 'text-gray-500' },
+    { id: 'system-info', title: 'System Info', icon: FaInfoCircle, color: 'text-blue-500' },
+    { id: 'news', title: 'News', icon: FaNewspaper, color: 'text-red-500' },
+    { id: 'font-book', title: 'Font Book', icon: FaFont, color: 'text-green-600' },
+    { id: 'photo-booth', title: 'Photo Booth', icon: FaCamera, color: 'text-red-500' },
+    { id: 'voice-memos', title: 'Voice Memos', icon: FaMicrophone, color: 'text-red-500' },
+    { id: 'app-store', title: 'App Store', icon: FaStore, color: 'text-blue-500' },
+    { id: 'dictionary', title: 'Dictionary', icon: FaBookOpen, color: 'text-amber-600' },
+    { id: 'shortcuts', title: 'Shortcuts', icon: FaMagic, color: 'text-pink-500' },
     { id: 'settings', title: 'Settings', icon: FaCog, color: 'text-gray-500' },
 ]
 

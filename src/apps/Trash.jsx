@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FaTrash, FaTrashRestore, FaFile, FaFolder, FaImage, FaFileAlt, FaMusic, FaVideo, FaExclamationTriangle, FaTimes, FaCheck } from 'react-icons/fa'
 import { useStore } from '../store/useStore'
+import { useDropTarget } from '../context/DragDropContext'
 
 const getFileIcon = (type) => {
     switch (type) {
@@ -28,10 +29,29 @@ const formatDate = (dateString) => {
 }
 
 const Trash = () => {
-    const { darkMode, trashItems, restoreFromTrash, emptyTrash, deleteFromTrash } = useStore()
+    const { darkMode, trashItems, restoreFromTrash, emptyTrash, deleteFromTrash, moveToTrash, addNotification } = useStore()
     const [selectedItems, setSelectedItems] = useState([])
     const [showEmptyConfirm, setShowEmptyConfirm] = useState(false)
     const [viewMode, setViewMode] = useState('list') // list or grid
+
+    // Handle drop - accept any item and move it to trash
+    const handleDrop = useCallback((data) => {
+        const trashItem = {
+            id: Date.now(),
+            name: data.name || 'Unknown Item',
+            type: data.fileType || data.type || 'file',
+            size: data.size || '-',
+            originalPath: data.sourcePath || 'Unknown'
+        }
+        moveToTrash(trashItem)
+        addNotification({
+            title: 'Item Moved to Trash',
+            message: `"${data.name}" has been moved to Trash`,
+            app: 'Trash'
+        })
+    }, [moveToTrash, addNotification])
+
+    const { ref: dropRef, isOver } = useDropTarget('trash-main', handleDrop, ['finder-file', 'file', 'note', 'photo'])
 
     const toggleSelect = (id) => {
         setSelectedItems(prev =>
@@ -68,7 +88,7 @@ const Trash = () => {
     const isEmpty = trashItems.length === 0
 
     return (
-        <div className={`w-full h-full flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+        <div ref={dropRef} className={`w-full h-full flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'} ${isOver ? 'ring-4 ring-red-400 ring-inset bg-red-50/10' : ''}`}>
             {/* Toolbar */}
             <div className={`h-12 flex items-center justify-between px-4 border-b ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
                 <div className="flex items-center gap-3">
@@ -121,12 +141,12 @@ const Trash = () => {
             <div className="flex-1 overflow-auto">
                 {isEmpty ? (
                     <div className="flex flex-col items-center justify-center h-full">
-                        <FaTrash className={`w-20 h-20 mb-4 ${darkMode ? 'text-gray-700' : 'text-gray-200'}`} />
-                        <h2 className={`text-xl font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            Trash is Empty
+                        <FaTrash className={`w-20 h-20 mb-4 ${isOver ? 'text-red-400' : darkMode ? 'text-gray-700' : 'text-gray-200'}`} />
+                        <h2 className={`text-xl font-medium mb-2 ${isOver ? 'text-red-400' : darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {isOver ? 'Drop to Delete' : 'Trash is Empty'}
                         </h2>
                         <p className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                            Items you delete will appear here
+                            {isOver ? 'Release to move item to Trash' : 'Drag items here or delete files to move them to Trash'}
                         </p>
                     </div>
                 ) : (

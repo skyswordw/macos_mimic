@@ -25,17 +25,25 @@ const apps = [
     { id: 'trash', title: 'Trash', icon: FaTrash, color: 'text-gray-400', badgeKey: 'trash' },
 ]
 
-// Simulated badge counts (in a real app, this would come from store)
+// Dynamic badge counts based on store state
 const useBadgeCounts = () => {
-    const { notifications, trashItems } = useStore()
+    const { notifications, trashItems, windows } = useStore()
     const unreadNotifications = notifications.filter(n => !n.read).length
 
+    // Calculate app-specific badge counts
+    const mailNotifications = notifications.filter(n => n.app === 'Mail' && !n.read).length
+    const messageNotifications = notifications.filter(n => n.app === 'Messages' && !n.read).length
+    const reminderNotifications = notifications.filter(n => n.app === 'Reminders' && !n.read).length
+    const calendarNotifications = notifications.filter(n => n.app === 'Calendar' && !n.read).length
+
+    // Default simulated counts when no notifications
     return {
-        mail: 3, // Simulated unread mail
-        messages: 2, // Simulated unread messages
-        calendar: 0,
-        reminders: 5, // Simulated pending reminders
+        mail: mailNotifications || 3, // Fallback to simulated count
+        messages: messageNotifications || 2,
+        calendar: calendarNotifications,
+        reminders: reminderNotifications || 5,
         trash: trashItems.length,
+        'app-store': 1, // App updates available
     }
 }
 
