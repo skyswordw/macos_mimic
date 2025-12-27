@@ -255,7 +255,6 @@ const Window = ({ window, children }) => {
         initial: {
             scale: 0.8,
             opacity: 0,
-            y: 20,
             filter: "blur(10px)",
             transformOrigin: "center center"
         },
