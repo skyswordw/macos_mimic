@@ -28,12 +28,6 @@ export const useStore = create(
     isNotificationCenterOpen: false,
     isMissionControlOpen: false,
     showWidgets: false,
-    isLockScreenOpen: false,
-    isScreenSaverOpen: false,
-    isSiriOpen: false,
-    isPowerMenuOpen: false,
-    isEmojiPickerOpen: false,
-    emojiPickerPosition: { x: 100, y: 100 },
     brightness: persistedSettings.brightness ?? 100,
     darkMode: persistedSettings.darkMode ?? false,
     soundEnabled: persistedSettings.soundEnabled ?? true,
@@ -97,27 +91,6 @@ export const useStore = create(
         }
         return { showWidgets: !state.showWidgets }
     }),
-    toggleLockScreen: () => set((state) => ({ isLockScreenOpen: !state.isLockScreenOpen })),
-    setLockScreen: (value) => set({ isLockScreenOpen: value }),
-    toggleScreenSaver: () => set((state) => ({ isScreenSaverOpen: !state.isScreenSaverOpen })),
-    setScreenSaver: (value) => set({ isScreenSaverOpen: value }),
-    toggleSiri: () => set((state) => {
-        if (state.soundEnabled && !state.isSiriOpen) {
-            soundEffects.click()
-        }
-        return { isSiriOpen: !state.isSiriOpen }
-    }),
-    setSiri: (value) => set({ isSiriOpen: value }),
-    togglePowerMenu: () => set((state) => ({ isPowerMenuOpen: !state.isPowerMenuOpen })),
-    setPowerMenu: (value) => set({ isPowerMenuOpen: value }),
-    toggleEmojiPicker: (position) => set((state) => ({
-        isEmojiPickerOpen: !state.isEmojiPickerOpen,
-        emojiPickerPosition: position || state.emojiPickerPosition
-    })),
-    setEmojiPicker: (value, position) => set((state) => ({
-        isEmojiPickerOpen: value,
-        emojiPickerPosition: position || state.emojiPickerPosition
-    })),
     setBrightness: (val) => set({ brightness: val }),
     setWallpaper: (url) => set({ wallpaper: url }),
     toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),

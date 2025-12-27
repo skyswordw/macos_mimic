@@ -2,8 +2,6 @@ import { useState } from 'react'
 import Desktop from './components/layout/Desktop'
 import BootSequence from './components/system/BootSequence'
 import { useStore } from './store/useStore'
-// Temporarily disabled to debug window dragging
-// import { DragDropProvider } from './context/DragDropContext'
 
 function App() {
     const { isLogin } = useStore()

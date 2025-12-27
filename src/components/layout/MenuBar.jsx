@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { FaApple, FaWifi, FaBatteryFull, FaSearch, FaToggleOn, FaTh, FaThLarge, FaMicrophone } from 'react-icons/fa'
+import { FaApple, FaWifi, FaBatteryFull, FaSearch, FaToggleOn, FaTh, FaThLarge } from 'react-icons/fa'
 import { format } from 'date-fns'
 import { useStore } from '../../store/useStore'
 import ControlCenter from '../system/ControlCenter'
@@ -310,11 +310,7 @@ const appMenus = {
 
 const MenuBar = () => {
     const [time, setTime] = useState(new Date())
-    const {
-        toggleSpotlight, toggleNotificationCenter, toggleMissionControl, toggleWidgets,
-        currentDesktop, darkMode, activeApp, openWindow,
-        toggleSiri, toggleLockScreen, setPowerMenu, setScreenSaver
-    } = useStore()
+    const { toggleSpotlight, toggleNotificationCenter, toggleMissionControl, toggleWidgets, currentDesktop, desktops, darkMode, activeApp } = useStore()
     const [activeMenu, setActiveMenu] = useState(null)
     const [activeSubMenu, setActiveSubMenu] = useState(null)
     const [showControlCenter, setShowControlCenter] = useState(false)
@@ -355,38 +351,17 @@ const MenuBar = () => {
                         onClick={() => toggleMenu('apple')}
                     />
                     {activeMenu === 'apple' && (
-                        <div className={`absolute top-8 left-0 w-56 backdrop-blur-xl rounded-lg shadow-xl py-1 border z-50 ${
-                                            darkMode ? 'bg-gray-800/95 border-gray-600/50 text-white' : 'bg-gray-100/95 border-gray-200/50 text-black'
-                                        }`}>
-                            <div className="px-4 py-1.5 hover:bg-blue-500 hover:text-white cursor-pointer"
-                                onClick={() => { openWindow('system-info', 'System Info', 'system-info'); setActiveMenu(null) }}>
-                                About This Mac
-                            </div>
-                            <div className={`h-[1px] my-1 mx-2 ${darkMode ? 'bg-gray-600' : 'bg-gray-300'}`} />
-                            <div className="px-4 py-1.5 hover:bg-blue-500 hover:text-white cursor-pointer"
-                                onClick={() => { openWindow('settings', 'Settings', 'settings'); setActiveMenu(null) }}>
-                                System Settings...
-                            </div>
-                            <div className="px-4 py-1.5 hover:bg-blue-500 hover:text-white cursor-pointer">App Store...</div>
-                            <div className={`h-[1px] my-1 mx-2 ${darkMode ? 'bg-gray-600' : 'bg-gray-300'}`} />
-                            <div className="px-4 py-1.5 hover:bg-blue-500 hover:text-white cursor-pointer"
-                                onClick={() => { setScreenSaver(true); setActiveMenu(null) }}>
-                                Sleep
-                            </div>
-                            <div className="px-4 py-1.5 hover:bg-blue-500 hover:text-white cursor-pointer"
-                                onClick={() => { setPowerMenu(true); setActiveMenu(null) }}>
-                                Restart...
-                            </div>
-                            <div className="px-4 py-1.5 hover:bg-blue-500 hover:text-white cursor-pointer"
-                                onClick={() => { setPowerMenu(true); setActiveMenu(null) }}>
-                                Shut Down...
-                            </div>
-                            <div className={`h-[1px] my-1 mx-2 ${darkMode ? 'bg-gray-600' : 'bg-gray-300'}`} />
-                            <div className="px-4 py-1.5 hover:bg-blue-500 hover:text-white cursor-pointer flex justify-between"
-                                onClick={() => { toggleLockScreen(); setActiveMenu(null) }}>
-                                <span>Lock Screen</span>
-                                <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>⌃⌘Q</span>
-                            </div>
+                        <div className="absolute top-8 left-0 w-48 bg-gray-100/90 backdrop-blur-xl rounded-lg shadow-xl text-black py-1 border border-gray-200">
+                            <div className="px-4 py-1 hover:bg-blue-500 hover:text-white cursor-pointer">About This Mac</div>
+                            <div className="h-[1px] bg-gray-300 my-1" />
+                            <div className="px-4 py-1 hover:bg-blue-500 hover:text-white cursor-pointer">System Settings...</div>
+                            <div className="px-4 py-1 hover:bg-blue-500 hover:text-white cursor-pointer">App Store...</div>
+                            <div className="h-[1px] bg-gray-300 my-1" />
+                            <div className="px-4 py-1 hover:bg-blue-500 hover:text-white cursor-pointer">Sleep</div>
+                            <div className="px-4 py-1 hover:bg-blue-500 hover:text-white cursor-pointer">Restart...</div>
+                            <div className="px-4 py-1 hover:bg-blue-500 hover:text-white cursor-pointer">Shut Down...</div>
+                            <div className="h-[1px] bg-gray-300 my-1" />
+                            <div className="px-4 py-1 hover:bg-blue-500 hover:text-white cursor-pointer">Lock Screen</div>
                         </div>
                     )}
                 </div>
@@ -449,12 +424,7 @@ const MenuBar = () => {
                     />
                     <FaBatteryFull className="text-lg" />
                     <FaWifi className="text-lg" />
-                    <FaSearch className="text-sm cursor-pointer hover:text-gray-200" onClick={toggleSpotlight} title="Spotlight" />
-                    <FaMicrophone
-                        className="text-sm cursor-pointer hover:text-gray-200"
-                        onClick={toggleSiri}
-                        title="Siri"
-                    />
+                    <FaSearch className="text-sm cursor-pointer" onClick={toggleSpotlight} />
                     <div className="relative control-center-container">
                         <FaToggleOn
                             className={`text-xl cursor-pointer ${showControlCenter ? 'text-white' : 'text-gray-200'}`}

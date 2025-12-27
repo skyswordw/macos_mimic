@@ -20,22 +20,6 @@ import Reminders from '../../apps/Reminders'
 import ActivityMonitor from '../../apps/ActivityMonitor'
 import Preview from '../../apps/Preview'
 import TextEdit from '../../apps/TextEdit'
-import Clock from '../../apps/Clock'
-import Stocks from '../../apps/Stocks'
-import Maps from '../../apps/Maps'
-import FaceTime from '../../apps/FaceTime'
-import Books from '../../apps/Books'
-import Contacts from '../../apps/Contacts'
-import Podcasts from '../../apps/Podcasts'
-import DiskUtility from '../../apps/DiskUtility'
-import SystemInfo from '../../apps/SystemInfo'
-import News from '../../apps/News'
-import FontBook from '../../apps/FontBook'
-import PhotoBooth from '../../apps/PhotoBooth'
-import VoiceMemos from '../../apps/VoiceMemos'
-import AppStore from '../../apps/AppStore'
-import Dictionary from '../../apps/Dictionary'
-import Shortcuts from '../../apps/Shortcuts'
 
 const WindowManager = () => {
     const { windows, currentDesktop } = useStore()
@@ -60,22 +44,6 @@ const WindowManager = () => {
             case 'activity-monitor': return <ActivityMonitor />
             case 'preview': return <Preview />
             case 'textedit': return <TextEdit />
-            case 'clock': return <Clock />
-            case 'stocks': return <Stocks />
-            case 'maps': return <Maps />
-            case 'facetime': return <FaceTime />
-            case 'books': return <Books />
-            case 'contacts': return <Contacts />
-            case 'podcasts': return <Podcasts />
-            case 'disk-utility': return <DiskUtility />
-            case 'system-info': return <SystemInfo />
-            case 'news': return <News />
-            case 'font-book': return <FontBook />
-            case 'photo-booth': return <PhotoBooth />
-            case 'voice-memos': return <VoiceMemos />
-            case 'app-store': return <AppStore />
-            case 'dictionary': return <Dictionary />
-            case 'shortcuts': return <Shortcuts />
             default: return <div className="p-4">App not implemented yet</div>
         }
     }

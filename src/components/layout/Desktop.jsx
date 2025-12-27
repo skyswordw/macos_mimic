@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import MenuBar from './MenuBar'
 import Dock from '../dock/Dock'
 import WindowManager from '../window/WindowManager'
@@ -16,38 +16,9 @@ import HotCorners from '../system/HotCorners'
 import Widgets from '../system/Widgets'
 import AppSwitcher from '../system/AppSwitcher'
 import DesktopIcon from './DesktopIcon'
-import LockScreen from '../system/LockScreen'
-import ScreenSaver from '../system/ScreenSaver'
-import Siri from '../system/Siri'
-import PowerMenu from '../system/PowerMenu'
-import EmojiPicker from '../system/EmojiPicker'
 
 const Desktop = () => {
-    const {
-        wallpaper, desktopIcons, darkMode,
-        isLockScreenOpen, setLockScreen,
-        isScreenSaverOpen, setScreenSaver,
-        isSiriOpen, setSiri,
-        isPowerMenuOpen, setPowerMenu,
-        isEmojiPickerOpen, setEmojiPicker, emojiPickerPosition
-    } = useStore()
-
-    const handlePowerAction = (action) => {
-        switch(action) {
-            case 'lock':
-                setLockScreen(true)
-                break
-            case 'sleep':
-                setScreenSaver(true)
-                break
-            case 'logout':
-            case 'restart':
-            case 'shutdown':
-                // Simulate shutdown/restart with lock screen
-                setLockScreen(true)
-                break
-        }
-    }
+    const { wallpaper, desktopIcons, darkMode } = useStore()
 
     // 注册全局键盘快捷键
     useKeyboardShortcuts()
@@ -79,21 +50,6 @@ const Desktop = () => {
             <ContextMenu />
             <Dock />
             <AppSwitcher />
-
-            {/* System Overlays */}
-            {isLockScreenOpen && <LockScreen onUnlock={() => setLockScreen(false)} />}
-            {isScreenSaverOpen && <ScreenSaver onDismiss={() => setScreenSaver(false)} />}
-            <Siri isOpen={isSiriOpen} onClose={() => setSiri(false)} />
-            <PowerMenu isOpen={isPowerMenuOpen} onClose={() => setPowerMenu(false)} onAction={handlePowerAction} />
-            <EmojiPicker
-                isOpen={isEmojiPickerOpen}
-                onClose={() => setEmojiPicker(false)}
-                position={emojiPickerPosition}
-                onSelect={(emoji) => {
-                    navigator.clipboard.writeText(emoji)
-                    setEmojiPicker(false)
-                }}
-            />
         </div>
     )
 }
