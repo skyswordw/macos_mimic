@@ -101,8 +101,20 @@ export const DragDropProvider = ({ children }) => {
 
 export const useDragDrop = () => {
     const context = useContext(DragDropContext)
+    // Return a no-op context if not within provider (graceful fallback)
     if (!context) {
-        throw new Error('useDragDrop must be used within a DragDropProvider')
+        return {
+            dragData: null,
+            isDragging: false,
+            dragPosition: { x: 0, y: 0 },
+            startDrag: () => {},
+            updateDragPosition: () => {},
+            endDrag: () => {},
+            registerDropTarget: () => {},
+            unregisterDropTarget: () => {},
+            getActiveDropTarget: () => null,
+            executeDrop: () => {}
+        }
     }
     return context
 }
@@ -146,16 +158,22 @@ export const useDropTarget = (id, onDrop, accepts = null) => {
     const ref = React.useRef(null)
 
     React.useEffect(() => {
-        if (ref.current) {
+        const element = ref.current
+        if (element) {
             const updateBounds = () => {
-                const rect = ref.current.getBoundingClientRect()
-                registerDropTarget(id, rect, onDrop, accepts)
+                if (ref.current) {
+                    const rect = ref.current.getBoundingClientRect()
+                    registerDropTarget(id, rect, onDrop, accepts)
+                }
             }
             updateBounds()
             window.addEventListener('resize', updateBounds)
+            // Also update on scroll
+            window.addEventListener('scroll', updateBounds, true)
             return () => {
                 unregisterDropTarget(id)
                 window.removeEventListener('resize', updateBounds)
+                window.removeEventListener('scroll', updateBounds, true)
             }
         }
     }, [id, onDrop, accepts, registerDropTarget, unregisterDropTarget])
