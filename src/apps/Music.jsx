@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaRandom, FaRedo, FaVolumeUp, FaVolumeMute, FaHeart, FaRegHeart, FaSearch, FaList, FaMusic, FaHome, FaCompactDisc, FaUser, FaSlidersH, FaWaveSquare } from 'react-icons/fa'
+import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaRandom, FaRedo, FaVolumeUp, FaVolumeMute, FaHeart, FaRegHeart, FaSearch, FaList, FaMusic, FaHome, FaCompactDisc, FaUser } from 'react-icons/fa'
 import { useStore } from '../store/useStore'
 
 // Load liked songs from localStorage
@@ -25,56 +24,25 @@ const loadMusicSettings = () => {
     return { volume: 75, shuffle: false, repeat: false }
 }
 
-// Audio synthesis engine for generating music with visualization support
+// Audio synthesis engine for generating music
 class MusicSynthesizer {
     constructor() {
         this.audioContext = null
         this.masterGain = null
-        this.analyser = null
-        this.eqFilters = []
         this.isInitialized = false
         this.currentNotes = []
         this.sequencer = null
         this.isPlaying = false
         this.currentStep = 0
         this.bpm = 120
-        this.frequencyData = new Uint8Array(64)
-        this.eqSettings = [0, 0, 0, 0, 0, 0, 0, 0] // 8-band EQ
     }
 
     init() {
         if (this.isInitialized) return
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)()
-
-        // Create analyser for visualization
-        this.analyser = this.audioContext.createAnalyser()
-        this.analyser.fftSize = 128
-        this.analyser.smoothingTimeConstant = 0.8
-        this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount)
-
-        // Create master gain
         this.masterGain = this.audioContext.createGain()
+        this.masterGain.connect(this.audioContext.destination)
         this.masterGain.gain.value = 0.3
-
-        // Create 8-band EQ
-        const frequencies = [60, 170, 310, 600, 1000, 3000, 6000, 12000]
-        let previousNode = this.masterGain
-
-        frequencies.forEach((freq, i) => {
-            const filter = this.audioContext.createBiquadFilter()
-            filter.type = 'peaking'
-            filter.frequency.value = freq
-            filter.Q.value = 1
-            filter.gain.value = this.eqSettings[i]
-            previousNode.connect(filter)
-            previousNode = filter
-            this.eqFilters.push(filter)
-        })
-
-        // Connect last filter to analyser, then to destination
-        previousNode.connect(this.analyser)
-        this.analyser.connect(this.audioContext.destination)
-
         this.isInitialized = true
     }
 
@@ -82,20 +50,6 @@ class MusicSynthesizer {
         if (this.masterGain) {
             this.masterGain.gain.value = volume * 0.5
         }
-    }
-
-    setEQ(band, gain) {
-        if (this.eqFilters[band]) {
-            this.eqSettings[band] = gain
-            this.eqFilters[band].gain.value = gain
-        }
-    }
-
-    getFrequencyData() {
-        if (this.analyser) {
-            this.analyser.getByteFrequencyData(this.frequencyData)
-        }
-        return this.frequencyData
     }
 
     // Musical note frequencies
@@ -366,12 +320,6 @@ const Music = () => {
     const [searchTerm, setSearchTerm] = useState('')
     const [currentView, setCurrentView] = useState('library')
     const [likedSongs, setLikedSongs] = useState(songs.filter(s => s.liked))
-    const [showEqualizer, setShowEqualizer] = useState(false)
-    const [showVisualizer, setShowVisualizer] = useState(false)
-    const [visualizerData, setVisualizerData] = useState(new Array(32).fill(0))
-    const [eqBands, setEqBands] = useState([0, 0, 0, 0, 0, 0, 0, 0])
-    const [visualizerStyle, setVisualizerStyle] = useState('bars') // 'bars', 'wave', 'circle'
-    const visualizerRef = useRef(null)
 
     const progressInterval = useRef(null)
 
@@ -485,55 +433,6 @@ const Music = () => {
         }
     }, [])
 
-    // Visualizer animation loop
-    useEffect(() => {
-        let animationFrame
-        const updateVisualizer = () => {
-            if (isPlaying) {
-                const data = synthesizer.getFrequencyData()
-                // Sample 32 bars from frequency data
-                const sampledData = []
-                for (let i = 0; i < 32; i++) {
-                    const index = Math.floor(i * data.length / 32)
-                    sampledData.push(data[index] || 0)
-                }
-                setVisualizerData(sampledData)
-            }
-            animationFrame = requestAnimationFrame(updateVisualizer)
-        }
-        if (showVisualizer && isPlaying) {
-            updateVisualizer()
-        }
-        return () => cancelAnimationFrame(animationFrame)
-    }, [showVisualizer, isPlaying])
-
-    // Update EQ when band changes
-    const handleEQChange = (band, value) => {
-        const newBands = [...eqBands]
-        newBands[band] = value
-        setEqBands(newBands)
-        synthesizer.setEQ(band, value)
-    }
-
-    // EQ presets
-    const eqPresets = {
-        flat: [0, 0, 0, 0, 0, 0, 0, 0],
-        bass: [8, 6, 4, 0, 0, 0, 0, 0],
-        treble: [0, 0, 0, 0, 2, 4, 6, 8],
-        vocal: [-2, 0, 2, 4, 4, 2, 0, -2],
-        rock: [5, 4, 0, -2, 0, 2, 4, 5],
-        electronic: [6, 4, 0, 2, 4, 6, 4, 2],
-        acoustic: [3, 2, 0, 1, 2, 3, 4, 3],
-    }
-
-    const applyEQPreset = (presetName) => {
-        const preset = eqPresets[presetName]
-        if (preset) {
-            setEqBands(preset)
-            preset.forEach((value, i) => synthesizer.setEQ(i, value))
-        }
-    }
-
     // Keyboard shortcuts for media controls
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -631,18 +530,6 @@ const Music = () => {
                         className={`px-4 py-2 rounded-full ${currentView === 'nowplaying' ? 'bg-white/20' : 'hover:bg-white/10'}`}
                     >
                         Now Playing
-                    </button>
-                    <button
-                        onClick={() => setShowVisualizer(!showVisualizer)}
-                        className={`px-4 py-2 rounded-full flex items-center gap-2 ${showVisualizer ? 'bg-purple-500' : 'hover:bg-white/10'}`}
-                    >
-                        <FaWaveSquare /> Visualizer
-                    </button>
-                    <button
-                        onClick={() => setShowEqualizer(!showEqualizer)}
-                        className={`px-4 py-2 rounded-full flex items-center gap-2 ${showEqualizer ? 'bg-green-500' : 'hover:bg-white/10'}`}
-                    >
-                        <FaSlidersH /> EQ
                     </button>
                 </div>
 
@@ -779,184 +666,6 @@ const Music = () => {
                             </div>
                         </div>
                     )}
-
-                    {/* Visualizer Overlay */}
-                    <AnimatePresence>
-                        {showVisualizer && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 20 }}
-                                className="absolute inset-0 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-8"
-                            >
-                                <div className="mb-6 flex gap-4">
-                                    {['bars', 'wave', 'circle'].map(style => (
-                                        <button
-                                            key={style}
-                                            onClick={() => setVisualizerStyle(style)}
-                                            className={`px-4 py-2 rounded-full capitalize ${
-                                                visualizerStyle === style ? 'bg-purple-500' : 'bg-white/10'
-                                            }`}
-                                        >
-                                            {style}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {visualizerStyle === 'bars' && (
-                                    <div className="flex items-end justify-center gap-1 h-64 w-full max-w-2xl">
-                                        {visualizerData.map((value, i) => (
-                                            <motion.div
-                                                key={i}
-                                                className="w-4 rounded-t-full"
-                                                style={{
-                                                    background: `linear-gradient(to top, #8b5cf6, #ec4899)`,
-                                                    height: `${Math.max(4, (value / 255) * 256)}px`,
-                                                }}
-                                                animate={{
-                                                    height: `${Math.max(4, (value / 255) * 256)}px`,
-                                                }}
-                                                transition={{ duration: 0.05 }}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-
-                                {visualizerStyle === 'wave' && (
-                                    <svg className="w-full max-w-2xl h-64" viewBox="0 0 320 128">
-                                        <defs>
-                                            <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                <stop offset="0%" stopColor="#8b5cf6" />
-                                                <stop offset="50%" stopColor="#ec4899" />
-                                                <stop offset="100%" stopColor="#8b5cf6" />
-                                            </linearGradient>
-                                        </defs>
-                                        <motion.path
-                                            d={`M 0 64 ${visualizerData.map((v, i) =>
-                                                `L ${i * 10} ${64 - (v / 255) * 60}`
-                                            ).join(' ')} L 320 64`}
-                                            fill="none"
-                                            stroke="url(#waveGradient)"
-                                            strokeWidth="3"
-                                        />
-                                        <motion.path
-                                            d={`M 0 64 ${visualizerData.map((v, i) =>
-                                                `L ${i * 10} ${64 + (v / 255) * 60}`
-                                            ).join(' ')} L 320 64`}
-                                            fill="none"
-                                            stroke="url(#waveGradient)"
-                                            strokeWidth="3"
-                                            opacity="0.5"
-                                        />
-                                    </svg>
-                                )}
-
-                                {visualizerStyle === 'circle' && (
-                                    <div className="relative w-64 h-64">
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <img
-                                                src={currentSong.cover}
-                                                alt=""
-                                                className={`w-32 h-32 rounded-full object-cover ${isPlaying ? 'animate-spin' : ''}`}
-                                                style={{ animationDuration: '4s' }}
-                                            />
-                                        </div>
-                                        {visualizerData.slice(0, 24).map((value, i) => {
-                                            const angle = (i / 24) * 360
-                                            const radius = 80 + (value / 255) * 50
-                                            return (
-                                                <motion.div
-                                                    key={i}
-                                                    className="absolute w-2 h-2 rounded-full"
-                                                    style={{
-                                                        background: `hsl(${280 + i * 3}, 80%, 60%)`,
-                                                        left: '50%',
-                                                        top: '50%',
-                                                        transform: `rotate(${angle}deg) translateY(-${radius}px)`,
-                                                    }}
-                                                />
-                                            )
-                                        })}
-                                    </div>
-                                )}
-
-                                <div className="mt-8 text-center">
-                                    <h2 className="text-2xl font-bold">{currentSong.title}</h2>
-                                    <p className="text-gray-400">{currentSong.artist}</p>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-
-                    {/* Equalizer Panel */}
-                    <AnimatePresence>
-                        {showEqualizer && (
-                            <motion.div
-                                initial={{ opacity: 0, x: 100 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 100 }}
-                                className="absolute right-0 top-0 bottom-0 w-80 bg-black/95 backdrop-blur-xl border-l border-white/10 p-6"
-                            >
-                                <h3 className="text-xl font-bold mb-6">Equalizer</h3>
-
-                                {/* Presets */}
-                                <div className="mb-6">
-                                    <div className="text-xs text-gray-400 uppercase mb-2">Presets</div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {Object.keys(eqPresets).map(preset => (
-                                            <button
-                                                key={preset}
-                                                onClick={() => applyEQPreset(preset)}
-                                                className="px-3 py-1 rounded-full text-sm bg-white/10 hover:bg-white/20 capitalize"
-                                            >
-                                                {preset}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* EQ Sliders */}
-                                <div className="flex justify-between items-end h-48 mb-4">
-                                    {['60', '170', '310', '600', '1k', '3k', '6k', '12k'].map((label, i) => (
-                                        <div key={i} className="flex flex-col items-center gap-2">
-                                            <div className="h-36 w-6 relative bg-white/10 rounded-full overflow-hidden">
-                                                <div
-                                                    className="absolute bottom-1/2 left-0 right-0 bg-green-500 transition-all"
-                                                    style={{
-                                                        height: `${Math.abs(eqBands[i]) * 4}%`,
-                                                        transform: eqBands[i] >= 0 ? 'translateY(0)' : 'translateY(100%)',
-                                                        bottom: eqBands[i] >= 0 ? '50%' : 'auto',
-                                                        top: eqBands[i] < 0 ? '50%' : 'auto',
-                                                    }}
-                                                />
-                                                <input
-                                                    type="range"
-                                                    min="-12"
-                                                    max="12"
-                                                    value={eqBands[i]}
-                                                    onChange={(e) => handleEQChange(i, parseInt(e.target.value))}
-                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                    style={{ writingMode: 'bt-lr', transform: 'rotate(-90deg)' }}
-                                                />
-                                                <div
-                                                    className="absolute left-1/2 w-4 h-4 -ml-2 bg-white rounded-full shadow"
-                                                    style={{
-                                                        top: `${50 - (eqBands[i] / 12) * 45}%`,
-                                                    }}
-                                                />
-                                            </div>
-                                            <span className="text-xs text-gray-400">{label}</span>
-                                            <span className="text-xs">{eqBands[i] > 0 ? '+' : ''}{eqBands[i]}</span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="text-center text-xs text-gray-500 mt-4">
-                                    Hz
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
                 </div>
             </div>
 
